@@ -1,0 +1,16 @@
+[package]
+name = "apollo-fusion"
+version = "0.1.0"
+authors = ["Marshall Culpepper <marshall@kubos.com>"]
+
+[dependencies]
+juniper = "0.9.2"
+kubos-service = { path = "../kubos/services/kubos-service" }
+kubos-app = { path = "../kubos/apis/app-api" }
+kubos-system = { path = "../kubos/apis/system-api" }
+kubos-telemetry = { path = "../kubos/apis/telemetry-api" }
+lazy_static = "1.0"
+serde_json = "1.0"
+
+[build-dependencies]
+kubos-build-helper = { path = "../kubos/kubos-build-helper" }
