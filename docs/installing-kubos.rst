@@ -38,9 +38,13 @@ The address can be verified by running the ``ipaddr`` command
 Install the Remaining KubOS Packages
 ------------------------------------
 
-(Install ``sshpass``... ``sudo apt-get install sshpass``. TODO: Add to vagrant?)
+`SSH into your Kubos SDK box <http://docs.kubos.co/latest/installation-docs/sdk-installing.html#start-the-vagrant-box>`__
 
-Run ``tools/package-install.sh`` in order to install the remaining required packages.
+Run ``sudo apt-get install sshpass``.
+
+Navigate to your copy of this repo and run ``tools/package-install.sh`` in order to install the
+remaining required packages.
+
 The script expects a single argument, which is the IP address of the stack.
 For example::
 

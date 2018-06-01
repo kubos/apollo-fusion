@@ -81,74 +81,19 @@ Pull the apollo-fusion repo (this is a private repo, so you will be required to 
 
     $ git clone http://github.com/kubos/apollo-fusion
 
-Move into the buildroot directory
+Move into the ``apollo-fusion/tools`` directory and run the ``build-os.sh`` script
 
 ::
 
-    $ cd buildroot-2017.02.8
-
-Point BuildRoot to the external folders and tell it to build using the proprietary iOBC
-configuration
-
-.. note::
-
-    You will need to build with ``sudo``, since the cross-compile toolchain resides in
-    a protected directory
-
-::
-
-    $ sudo make BR2_EXTERNAL=../kubos-linux-build:../apollo-fusion apollo-fusion_defconfig
-
-Build everything
-
-::
-
-    $ sudo make
+    $ cd apollo-fusion/tools
+    $ ./build-os.sh
 
 The full build process will take a while. Running on a Linux VM, it took about
 an hour. Running in native Linux, it took about ten minutes. Once this build
 process has completed once, you can run other BuildRoot commands to rebuild
 only certain sections and it will go much more quickly (<5 min).
 
-BuildRoot documentation can be found
-`**here** <https://buildroot.org/docs.html>`__
-
-The generated image will be located in ``buildroot-2017.02.8/output/images/kubos-linux.img``.
-TODO: Move the image somewhere useful for flashing
-
-Create auxilliary SD Card Image
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TODO: Automate creating the Aux SD image
-
-By default, the build process will create a bootable SD card image. This will be flashed
-onto the eMMC. In order to create a full Kubos Linux setup, you'll want to also create
-an auxiliary image for the microSD card containing the upgrade partition and an additional
-user data partition.
-
-TODO: copy the instructions here
-Follow the :ref:`upgrade-creation` instructions in order to create a base Kubos Package file
-(`kpack-base.itb`) to be used for recovery.
-
-Then, from the `kubos-linux-build/tools` folder, run the ``format-aux.sh`` script. 
-This will create a new SD card image, `aux-sd.img`, with two partitions:
-
-- An upgrade partition containing `kpack-base.itb`
-- A user data partition
-
-The image's disk signature will be 0x41555820 ("AUX ").
-
-There are two parameters which may be specified:
-
--  -s : Sets the size of the aux-sd.img file, specified in MB. The default is 3800 (3.8GB)
--  -i : Specifies the name and location of the kpack-\*.itb file to use as kpack-base.itb
-
-For example:
-
-::
-
-    $ ./format-aux.sh -i ../kpack-2017.07.21.itb
-
+TODO: final image output directory
 
 Reset the Global Links
 ~~~~~~~~~~~~~~~~~~~~~~
