@@ -24,6 +24,31 @@ Kubos Documentation
 -  :doc:`installing-kubos` - Steps to install KubOS
 -  :doc:`communicating-with-the-stack` - General guide for interacting with KubOS
 
+Setup
+-----
+
+In order to build the KubOS images, you'll need to create an instance of the Kubos SDK and then increase its allocated RAM.
+
+1. `Build  a Kubos SDK box <http://docs.kubos.co/latest/installation-docs/sdk-installing.html>`__
+
+   Steps in the doc:
+
+    - (Window 7 only) Upgrade PowerShell
+    - Install VirtualBox
+    - Install Vagrant
+    - Create SDK box
+    
+2. Shut down the box (``vagrant halt``)
+3. Edit the VM's settings to give it *at least* 4GB of RAM
+    
+    - Open `VirtualBox Manager`
+    - Select your VM (the name will be the name of the folder you ran ``vagrant init`` in, followed by "_default_" and some numbers
+    - Open Settings
+    - Increase `System > Base Memory` to the desired size
+    - Click OK
+    
+4. Bring the SDK box back up with ``vagrant up``
+
 Kubos Linux Build Process
 -------------------------
 
@@ -32,8 +57,6 @@ Kubos Linux Build Process
     The OS files cannot be built using a `synced folder <https://www.vagrantup.com/docs/synced-folders/>`__ in a Vagrant box (or regular VM).
     VirtualBox does not support hard links in shared folders, which are crucial in order to complete
     the build.
-    
-`Build and SSH into a Kubos SDK box <http://docs.kubos.co/latest/installation-docs/sdk-installing.html>`__
     
 In order to build KubOS, three components are needed:
 
@@ -88,17 +111,24 @@ Move into the ``apollo-fusion/tools`` directory and run the ``build-os.sh`` scri
     $ cd apollo-fusion/tools
     $ ./build-os.sh
 
-The full build process will take a while. Running on a Linux VM, it took about
-an hour. Running in native Linux, it took about ten minutes. Once this build
-process has completed once, you can run other BuildRoot commands to rebuild
-only certain sections and it will go much more quickly (<5 min).
+The full build process will take a while. Running on an SDK image, it took about
+an hour. When run from a native Linux environment, it can take as little as 20 minutes.
 
-TODO: final image output directory
+The script will create a tar.gz file, `ApolloFusion-mon-dd-yyyy.tar.gz`. For example, `ApolloFusion-Jun-06-2018.tar.gz`.
+
+This file contains two other tar.gz files:
+
+    - kubos-linux.tar.gz - Contains the `kubos-linux.img` file, which is the main OS image
+    - aux-sd.tar.gz - Contains the `aux-sd.img` file, which is the auxiliary SD image containing the secondary user partition and the upgrade partition, 
+      pre-loaded with a `kpack-base.itb` rollback file
+      
+Note: These tar.gz files have been created in order to make transferring and sending them easier and faster, since the total size of the full images is 8GB,
+but the size of the final tar.gz is ~40MB.
 
 Reset the Global Links
 ~~~~~~~~~~~~~~~~~~~~~~
 
-If you run a full build, the links to all the Kubos SDK modules will be changed to
+When you run a full build, the links to all the Kubos SDK modules will be changed to
 point at modules within the buildroot directory. As a result, you will be unable
 to build any future Kubos SDK projects as a non-privileged user.
 
