@@ -51,7 +51,7 @@ Install the Remaining KubOS Packages
 
 `SSH into your Kubos SDK box <http://docs.kubos.co/latest/installation-docs/sdk-installing.html#start-the-vagrant-box>`__
 
-Run ``sudo apt-get install sshpass``.
+Install ``sshpass`` in your SDK with ``sudo apt-get install sshpass``.
 
 Navigate to your copy of this repo and run ``tools/package-install.sh`` in order to install the
 remaining required packages.
