@@ -46,7 +46,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Kubos Linux for Apollo Fusion'
+project = u'KubOS for Apollo Fusion'
 copyright = u'2018, Kubos Corporation'
 author = u'kubos.com'
 
