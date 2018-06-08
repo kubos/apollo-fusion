@@ -22,8 +22,6 @@
 # - ip-addr: The IP address of the stack
 #
 
-kubos use -b pumpkin-mcu-api
-
 pass='sshpass -p Kubos123'
 
 $pass ssh kubos@$1 'date 2018-01-01; mkdir /home/kubos/install'
@@ -33,8 +31,8 @@ $pass scp -r $HOME/.kubos/kubos/libs/kubos_service kubos@$1:/home/kubos/install
 $pass scp -r $HOME/.kubos/kubos/apis/pumpkin_mcu_api kubos@$1:/home/kubos/install
 $pass scp -r $HOME/.kubos/kubos/services/pumpkin-mcu-service kubos@$1:/home/system/usr/sbin
 
-$pass ssh kubos@$1 'python /home/kubos/install/i2c/setup.py install'
-$pass ssh kubos@$1 'python /home/kubos/install/kubos_service/setup.py install'
-$pass ssh kubos@$1 'python /home/kubos/install/pumpkin_mcu_api/setup.py install'
+$pass ssh kubos@$1 'cd /home/kubos/install/i2c; python setup.py install'
+$pass ssh kubos@$1 'cd /home/kubos/install/kubos_service; python setup.py install'
+$pass ssh kubos@$1 'cd /home/kubos/install/pumpkin_mcu_api; python setup.py install'
 
 $pass ssh kubos@$1 'rm install -R'
