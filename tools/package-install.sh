@@ -22,6 +22,8 @@
 # - ip-addr: The IP address of the stack
 #
 
+set -e
+
 pass='sshpass -p Kubos123'
 
 $pass ssh kubos@$1 'date 2018-01-01; mkdir /home/kubos/install'

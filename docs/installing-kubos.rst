@@ -53,6 +53,8 @@ Install the Remaining KubOS Packages
 
 Install ``sshpass`` in your SDK with ``sudo apt-get install sshpass``.
 
+Verify that you can SSH into the stack.
+
 Navigate to your copy of this repo and run ``tools/package-install.sh`` in order to install the
 remaining required packages.
 
