@@ -28,23 +28,8 @@ The short version:
 Connect to the Stack
 --------------------
 
-Follow the :doc:`communicating-with-the-stack` instructions to get connected to the stack via the debug UART
-connection.
-
-Change the IP Address
----------------------
-
 We recommend doing the remaining file transfers via the Ethernet connection, since it is capable of
-greater transfer speeds.
-
-Log into the stack and then edit ``/etc/network/interfaces``. Update the IP address field to be an
-address of your choosing.
-
-Once updated, run the following commands in order to make the board use the new address::
-    
-    $ ifdown eth0; ifup eth0
-    
-The address can be verified by running the ``ipaddr`` command
+greater transfer speeds. As a result, please follow the :ref:`ethernet` instructions to get connected to the stack.
 
 Install the Remaining KubOS Packages
 ------------------------------------
