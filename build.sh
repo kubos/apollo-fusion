@@ -23,7 +23,7 @@ wget $buildroot_url && tar xvzf $buildroot_tar && rm $buildroot_tar
 
 cd ./buildroot*
 
-make BR2_EXTERNAL=../kubos-linux-build ${board}_defconfig
+make BR2_EXTERNAL=../kubos-linux-build:../apollo-fusion ${board}_defconfig
 
 exit 0
 
