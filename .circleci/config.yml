@@ -1,0 +1,17 @@
+version: 2
+jobs:
+    build:
+      docker:
+        - image: kubos/kubos-linux-dev:latest
+          environment: 
+            - KUBOS_BOARD: $KUBOS_BOARD
+            - CIRCLE_BUILD_NUM: $CIRCLE_BUILD_NUM
+            - CIRCLE_ARTIFACTS: $CIRCLE_ARTIFACTS
+      working_directory: ~/project/apollo-fusion
+      steps:
+        - checkout
+        - run: pwd
+        - run: ls
+        - run: ./build.sh | tee full_build.log
+        - store_artifacts:
+            path: full_build.log
