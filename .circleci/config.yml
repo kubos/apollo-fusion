@@ -5,13 +5,14 @@ jobs:
         - image: kubos/kubos-linux-dev:latest
           environment: 
             - KUBOS_BOARD: $KUBOS_BOARD
-            - CIRCLE_BUILD_NUM: $CIRCLE_BUILD_NUM
-            - CIRCLE_ARTIFACTS: $CIRCLE_ARTIFACTS
       working_directory: ~/project/apollo-fusion
       steps:
         - checkout
-        - run: pwd
-        - run: ls
         - run: ./build.sh | tee full_build.log
+        # Note: store_artifacts will trigger a failure when `circleci build` is run locally
         - store_artifacts:
             path: full_build.log
+        - store_artifacts:
+            path: buildroot-2017.02.8/output/images/kubos-linux.tar.gz
+    # TODO: Add build/test case for verifying the mission application/s compile successfully
+    # (Depends on mission app being added to this repo)
