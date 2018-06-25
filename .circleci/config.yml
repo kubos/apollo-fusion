@@ -3,8 +3,6 @@ jobs:
     build:
       docker:
         - image: kubos/kubos-linux-dev:latest
-          environment: 
-            - KUBOS_BOARD: $KUBOS_BOARD
       working_directory: ~/project/apollo-fusion
       steps:
         - checkout
@@ -14,5 +12,7 @@ jobs:
             path: full_build.log
         - store_artifacts:
             path: buildroot-2017.02.8/output/images/kubos-linux.tar.gz
+        - store_artifacts:
+            path: kubos-linux-build/tools/aux-sd.tar.gz
     # TODO: Add build/test case for verifying the mission application/s compile successfully
     # (Depends on mission app being added to this repo)
