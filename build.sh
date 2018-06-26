@@ -13,7 +13,7 @@ kubos update
 
 echo "Getting kubos-linux-build"
 
-git clone https://github.com/kubos/kubos-linux-build
+git clone https://github.com/kubos/kubos-linux-build -b br-upgrade
 
 echo "Getting buildroot"
 
