@@ -2,7 +2,7 @@
 
 set -e -o pipefail
 
-buildroot_tar="buildroot-2017.02.8.tar.gz"
+buildroot_tar="buildroot-2018.02.3.tar.gz"
 buildroot_url="https://buildroot.uclibc.org/downloads/$buildroot_tar"
 
 echo "Building for Board: apollo-fusion"
