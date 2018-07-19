@@ -1,7 +1,6 @@
 // Copyright (C) 2018 Kubos Corporation. All rights reserved.
 #[macro_use]
 extern crate kubos_app;
-extern crate kubos_service;
 extern crate kubos_system;
 extern crate kubos_telemetry;
 #[macro_use]
@@ -12,7 +11,7 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use kubos_app::App;
-use kubos_service::Config;
+use kubos_system::Config;
 
 mod services;
 

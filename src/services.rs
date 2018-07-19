@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::time::Duration;
 
-use kubos_service::Config;
+use kubos_system::Config;
 use kubos_system;
 use serde_json;
 
