@@ -1,5 +1,4 @@
 // Copyright (C) 2018 Kubos Corporation. All rights reserved.
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::time::Duration;
 

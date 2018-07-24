@@ -2,7 +2,7 @@
 #[macro_use]
 extern crate kubos_app;
 extern crate kubos_system;
-extern crate kubos_telemetry;
+extern crate kubos_telemetry_db;
 #[macro_use]
 extern crate lazy_static;
 extern crate serde_json;
@@ -10,20 +10,19 @@ extern crate serde_json;
 use std::thread::sleep;
 use std::time::Duration;
 
-use kubos_app::App;
 use kubos_system::Config;
 
 mod services;
 
 struct ApolloFusionApp {
-    telemetry: kubos_telemetry::Database,
+    telemetry: kubos_telemetry_db::Database,
 }
 
 impl kubos_app::AppHandler for ApolloFusionApp {
     fn on_boot(&self) {
         println!("ON-BOOT");
         self.print_boot_vars();
-        if let Some(initial_deploy) = kubos_system::kubos_initial_deploy() {
+        if let Some(initial_deploy) = kubos_system::initial_deploy() {
             if initial_deploy {
                 self.on_initial_deploy();
             }
@@ -46,7 +45,7 @@ impl ApolloFusionApp {
             .expect("No database path found in config file");
         let db_path = db_path.as_str().unwrap_or("");
 
-        let telemetry = kubos_telemetry::Database::new(&db_path);
+        let telemetry = kubos_telemetry_db::Database::new(&db_path);
         telemetry.setup();
 
         ApolloFusionApp {
@@ -55,44 +54,35 @@ impl ApolloFusionApp {
     }
 
     pub fn print_boot_vars(&self) {
-        if let Some(count) = kubos_system::boot_count() {
-            println!("Boot Count: {}", count);
+        let versions = kubos_system::kubos_versions();
+        if let Some(curr) = versions.curr {
+            println!("KubOS Curr Version: {}", curr);
         }
 
-        if let Some(limit) = kubos_system::boot_limit() {
-            println!("Boot Limit: {}", limit);
+        if let Some(prev) = versions.prev {
+            println!("KubOS Prev Version: {}", prev);
         }
 
-        if let Some(kubos_curr_version) = kubos_system::kubos_curr_version() {
-            println!("KubOS Curr Version: {}", kubos_curr_version);
-        }
-
-        if let Some(kubos_prev_version) = kubos_system::kubos_prev_version() {
-            println!("KubOS Prev Version: {}", kubos_prev_version);
-        }
-
-        if let Some(kubos_curr_tried) = kubos_system::kubos_curr_tried() {
-            println!("KubOS Curr Tried: {}", kubos_curr_tried);
-        }
-
-        if let Some(initial_deploy) = kubos_system::kubos_initial_deploy() {
+        if let Some(initial_deploy) = kubos_system::initial_deploy() {
             println!("KubOS Initial Deploy: {}", initial_deploy);
         }
     }
 
     pub fn main_loop(&self) {
         // Turn on GPSRM and enable pass-through
-        self.gps_passthrough("GPS:POW ON");
-        self.gps_passthrough("GPS:PASS ON");
+        self.gps_passthrough("GPS:POW ON").expect("Failed to power on GPS");
+        self.gps_passthrough("GPS:PASS ON").expect("Failed to enable passthrough on GPS");
 
         loop {
             // Record the current GPS subsystem power state
             let gps_state = self.gps_power_state();
-            self.telemetry.insert_systime(
+            if let Err(err) = self.telemetry.insert_systime(
                 "gps",
                 "power.state",
                 if gps_state { "ON" } else { "OFF" },
-            );
+            ) {
+                eprintln!("Warning: failed to insert GPS state: {:?}", err);
+            }
 
             sleep(Duration::from_secs(60));
         }
