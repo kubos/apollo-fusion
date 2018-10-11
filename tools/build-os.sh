@@ -23,8 +23,14 @@ set -e
 
 DATE=$(date +"%b-%d-%Y")
 DIR=$PWD
-BR_DIR=$DIR/../../buildroot-2017.02.8
-KLB_DIR=$DIR/../../kubos-linux-build/tools
+ROOT_DIR=$DIR/../..
+BR_DIR=$ROOT_DIR/buildroot-2017.02.8
+KLB_DIR=$ROOT_DIR/kubos-linux-build
+
+# Download BuildRoot and KLB_DIR
+cd $ROOT_DIR
+wget https://buildroot.uclibc.org/downloads/buildroot-2017.02.8.tar.gz && tar xvzf buildroot-2017.02.8.tar.gz && rm buildroot-2017.02.8.tar.gz
+git clone https://github.com/kubos/kubos-linux-build
 
 # Build the Kubos Linux image
 cd $BR_DIR
@@ -36,7 +42,7 @@ cp output/images/kubos-linux.tar.gz $DIR
 rm output/images/kubos-linux.img
 
 # Build the auxiliary SD card image
-cd $KLB_DIR
+cd $KLB_DIR/tools
 ./kubos-package.sh -t pumpkin-mbm2 -o output -v kpack-base.itb -k
 sudo ./format-aux.sh -i kpack-base.itb
 tar -czf aux-sd.tar.gz aux-sd.img
