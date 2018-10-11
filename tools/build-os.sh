@@ -28,9 +28,13 @@ BR_DIR=$ROOT_DIR/buildroot-2017.02.8
 KLB_DIR=$ROOT_DIR/kubos-linux-build
 
 # Download BuildRoot and KLB_DIR
-cd $ROOT_DIR
-wget https://buildroot.uclibc.org/downloads/buildroot-2017.02.8.tar.gz && tar xvzf buildroot-2017.02.8.tar.gz && rm buildroot-2017.02.8.tar.gz
-git clone https://github.com/kubos/kubos-linux-build
+if [ ! -d "$BR_DIR" ]; then
+    cd $ROOT_DIR
+    wget https://buildroot.uclibc.org/downloads/buildroot-2017.02.8.tar.gz && tar xvzf buildroot-2017.02.8.tar.gz && rm buildroot-2017.02.8.tar.gz
+fi
+if [ ! -d "$KLB_DIR" ]; then
+    git clone https://github.com/kubos/kubos-linux-build
+fi
 
 # Build the Kubos Linux image
 cd $BR_DIR
