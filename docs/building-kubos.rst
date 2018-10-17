@@ -15,7 +15,7 @@ Pumpkin Documentation
 ~~~~~~~~~~~~~~~~~~~~~
 
 The :title:`CubeSat Kit Motherboard Module (MBM) 2` reference document
-is available from Pumpkin and is a useful document for learning what 
+is available from Pumpkin and is a useful document for learning what
 each of the hardware components are and how they are connected.
 
 Kubos Documentation
@@ -37,16 +37,16 @@ In order to build the KubOS images, you'll need to create an instance of the Kub
     - Install VirtualBox
     - Install Vagrant
     - Create SDK box
-    
+
 2. Shut down the box (``vagrant halt``)
 3. Edit the VM's settings to give it *at least* 4GB of RAM
-    
+
     - Open `VirtualBox Manager`
     - Select your VM (the name will be the name of the folder you ran ``vagrant init`` in, followed by "_default_" and some numbers
     - Open Settings
     - Increase `System > Base Memory` to the desired size
     - Click OK
-    
+
 4. Bring the SDK box back up with ``vagrant up``
 
 Kubos Linux Build Process
@@ -64,7 +64,7 @@ In order to build KubOS, three components are needed:
 - The `apollo-fusion repo <https://github.com/kubos/apollo-fusion>`__ - This repo contains the proprietary components of KubOS for Apollo Fusion
 - `BuildRoot <https://buildroot.org/>`__ - The actual build system
 
-These components should be setup as children of the same parent directory. 
+These components should be setup as children of the same parent directory.
 There are several commands and variables in the build process which use relative file paths to navigate between the components.
 
 After the environment has been set up, all build commands will be run from the BuildRoot directory unless otherwise stated.
@@ -119,9 +119,9 @@ The script will create a tar.gz file, `ApolloFusion-mon-dd-yyyy.tar.gz`. For exa
 This file contains two other tar.gz files:
 
     - kubos-linux.tar.gz - Contains the `kubos-linux.img` file, which is the main OS image
-    - aux-sd.tar.gz - Contains the `aux-sd.img` file, which is the auxiliary SD image containing the secondary user partition and the upgrade partition, 
+    - aux-sd.tar.gz - Contains the `aux-sd.img` file, which is the auxiliary SD image containing the secondary user partition and the upgrade partition,
       pre-loaded with a `kpack-base.itb` rollback file
-      
+
 Note: These tar.gz files have been created in order to make transferring and sending them easier and faster, since the total size of the full images is 8GB,
 but the size of the final tar.gz is ~40MB.
 
@@ -139,3 +139,8 @@ To fix this, run these commands:
     $ cd $HOME/.kubos/kubos/tools
     $ ./kubos_link.py
     
+Next Steps
+----------
+
+Please refer to the :doc:`Installation doc <installing-kubos>` to install the `kubos-linux.img` and
+`aux-sd.img` image files onto the stack
