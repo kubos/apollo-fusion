@@ -18,6 +18,9 @@
 # Creates a tar.gz file containing the Kubos Linux and Aux SD images
 # 
 # Note: This script must be run from *this* folder due to the relative paths used
+#
+# Pre-Req: Please follow the instructions in `docs/building-kubos.rst` to
+# prepare the build environment
 
 set -e
 
@@ -33,26 +36,23 @@ if [ ! -d "$BR_DIR" ]; then
     wget https://buildroot.uclibc.org/downloads/buildroot-2017.02.8.tar.gz && tar xvzf buildroot-2017.02.8.tar.gz && rm buildroot-2017.02.8.tar.gz
 fi
 if [ ! -d "$KLB_DIR" ]; then
+    cd $ROOT_DIR
     git clone https://github.com/kubos/kubos-linux-build
 fi
 
-# Build the Kubos Linux image
+# Patch BuildRoot
+cd $KLB_DIR/tools
+cp pycompile.py ../../buildroot-2017.02.8/support/scripts
+
+# Grab the Kubos Linux image
 cd $BR_DIR
 sudo make BR2_EXTERNAL=../kubos-linux-build:../apollo-fusion apollo-fusion_defconfig
 sudo make
 sudo chmod +7 output/images/*
 cp output/images/kubos-linux.tar.gz $DIR
-# Delete the .img file to free disk space back up
-rm output/images/kubos-linux.img
 
-# Build the auxiliary SD card image
-cd $KLB_DIR/tools
-./kubos-package.sh -t pumpkin-mbm2 -o output -v kpack-base.itb -k
-sudo ./format-aux.sh -i kpack-base.itb
-tar -czf aux-sd.tar.gz aux-sd.img
-cp aux-sd.tar.gz $DIR
-# Delete the .img file to free disk space back up
-rm aux-sd.img
+# Grab the auxiliary SD card image
+cp output/images/aux-sd.tar.gz $DIR
 
 # Package it all up in a nice small tar file
 cd $DIR
