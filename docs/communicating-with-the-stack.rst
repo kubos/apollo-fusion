@@ -11,7 +11,7 @@ The serial debug port is the default available communication port on the stack.
 Setup
 ~~~~~
 
-Connect a Pumpkin USB debug adapter to the UART0 port on the Pumpkin MBM2 board and then connect the USB to your computer. 
+Connect a Pumpkin USB debug adapter to the UART0 port on the Pumpkin MBM2 board and then connect the USB to your computer.
 
 .. todo: Get photo of UART0 port on MBM2 board
 
@@ -51,7 +51,7 @@ with the following settings:
 +-----------+--------+
 | Stop Bits | 1      |
 +-----------+--------+
-    
+
 You can then log in. The default user account and password is Kubos/Kubos123.
 
 Fully logged in, the console should look like this:
@@ -74,7 +74,7 @@ Setup
 Connect an ethernet cable from the stack to either your computer or an open network port.
 
 Log into the stack and then edit ``/etc/network/interfaces``. Update the IP address field to be an
-address of your choosing.
+address which will be valid for your network.
 
 Once updated, run the following commands in order to make the board use the new address::
     
@@ -93,7 +93,7 @@ To connect from the command line, run ``ssh kubos@{ip-address}``.
 You will be prompted for the `kubos` account password.
 
 You can also use a tool, like PuTTY, to create an SSH connection.
-    
+
 File Transfer
 ~~~~~~~~~~~~~
 
@@ -178,31 +178,16 @@ For example, the requests for the telemetry service can be found in `services/te
 Sending a Request
 ~~~~~~~~~~~~~~~~~
 
-There are several ways to send a request to a Kubos service:
+There are two ways to send a request to a Kubos service:
 
     - From the command line directly on the stack
     - From the command line in your host machine or SDK
     - By running the UDP client program
 
-Native Command Line
-^^^^^^^^^^^^^^^^^^^
-
-If you connect to the stack, you can use the ``nc`` command to send requests directly to services.
-
-For example:
-
-.. code-block:: console
-
-    /home/kubos # echo "{ping}" | nc -uw1 0.0.0.0 8002
-    {"errs":"","msg":{"ping":"pong"}}
-    /home/kubos #
-    
-In this case, the IP address of the stack doesn't need to be known (or set up); only the port of the service needs to be specified.
-
 Remote Command Line
 ^^^^^^^^^^^^^^^^^^^
 
-If not directly connected to the stack, the ``nc`` command can still be used to send requests to services, 
+If not directly connected to the stack, the ``nc`` command can still be used to send requests to services,
 but the IP address must also be known:
 
 .. code-block:: console
@@ -213,7 +198,7 @@ but the IP address must also be known:
 
 In this example, we requested that the service run the no-op command against its underlying hardware and to report its success status and
 any failures. The underlying hardware was turned off, so the request failed and we were informed that we were unable to get a response from
-the device. 
+the device.
 
 UDP Client Program
 ^^^^^^^^^^^^^^^^^^
@@ -229,7 +214,7 @@ To use the program:
   and then the stack's IP address and the port of the service you are attempting to communicate with
 - Edit the ``query.txt`` file to contain your desired query or mutation request. *Note: Only one query or mutation request may be specified in
   the file, though multiple operations may be specified within that.*
-  
+
   For example::
   
     {

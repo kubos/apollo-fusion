@@ -42,3 +42,14 @@ database = "/home/system/kubos/telemetry.db"
 [telemetry-service.addr]
 ip = "0.0.0.0"
 port = 8005
+
+[file-transfer-service]
+storage_dir = "/home/system/file-storage"
+
+[file-transfer-service.addr]
+ip = "0.0.0.0"
+port = 8008
+
+[monitor-service.addr]
+ip = "0.0.0.0"
+port = 8009
