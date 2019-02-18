@@ -31,7 +31,7 @@ echo "STARTING BUILD"
 
 make
 
-echo "Moving image files to output folder
+echo "Moving image files to output folder"
 
 mv output/images/kubos-linux.tar.gz ../apollo-fusion
 mv output/images/aux-sd.tar.gz ../apollo-fusion
