@@ -5,6 +5,9 @@ set -e -o pipefail
 buildroot_tar="buildroot-2017.02.8.tar.gz"
 buildroot_url="https://buildroot.uclibc.org/downloads/$buildroot_tar"
 
+latest_tag=`git tag --sort=-creatordate | head -n 1`
+sed -i "s/0.0.0/$latest_tag/g" common/linux-kubos.config
+
 echo "Building for Board: apollo-fusion"
 
 cd .. #cd out of the apollo-fusion directory
@@ -24,12 +27,3 @@ make BR2_EXTERNAL=../kubos-linux-build:../apollo-fusion apollo-fusion_defconfig
 echo "STARTING BUILD"
 
 make
-
-echo "Creating Aux SD image"
-
-cd ../kubos-linux-build/tools
-./kubos-package.sh -t pumpkin-mbm2 -o output -v kpack-base.itb -k
-sudo ./format-aux.sh -i kpack-base.itb
-tar -czf aux-sd.tar.gz aux-sd.img
-# Delete the .img file to free disk space back up
-rm aux-sd.img
