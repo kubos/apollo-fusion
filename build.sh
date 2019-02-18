@@ -13,8 +13,11 @@ echo "Getting kubos-linux-build"
 
 git clone https://github.com/kubos/kubos-linux-build
 
+# Set the KLB version information
+cd kubos-linux-build
 latest_tag=`git tag --sort=-creatordate | head -n 1`
-sed -i "s/0.0.0/$latest_tag/g" kubos-linux-build/common/linux-kubos.config
+sed -i "s/0.0.0/$latest_tag/g" common/linux-kubos.config
+cd ..
 
 echo "Getting buildroot"
 
