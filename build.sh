@@ -9,8 +9,6 @@ echo "Building for Board: apollo-fusion"
 
 cd .. #cd out of the apollo-fusion directory
 
-kubos update
-
 echo "Getting kubos-linux-build"
 
 git clone https://github.com/kubos/kubos-linux-build
