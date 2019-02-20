@@ -40,10 +40,6 @@ if [ ! -d "$KLB_DIR" ]; then
     git clone https://github.com/kubos/kubos-linux-build
 fi
 
-# Patch BuildRoot
-cd $KLB_DIR/tools
-cp pycompile.py ../../buildroot-2017.02.8/support/scripts
-
 # Grab the Kubos Linux image
 cd $BR_DIR
 sudo make BR2_EXTERNAL=../kubos-linux-build:../apollo-fusion apollo-fusion_defconfig
