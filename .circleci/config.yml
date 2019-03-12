@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    os_build:
+    build_af:
       docker:
         - image: kubos/kubos-linux-dev:latest
       working_directory: ~/project/apollo-fusion
@@ -28,10 +28,34 @@ jobs:
       steps:
         - checkout
         - run: cargo clippy
-    rust_fmt:
+    apps_fmt:
       docker:
         - image: kubos/kubos-dev:latest
       working_directory: ~/project/apollo-fusion/apps
       steps:
         - checkout
         - run: cargo fmt -- --check
+    
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build_af:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*$/
+            branches:
+              ignore: master
+      - apps_build:
+          filters:
+            branches:
+              ignore: master
+      - apps_clippy:
+          filters:
+            branches:
+              ignore: master
+      - apps_fmt:
+          filters:
+            branches:
+              ignore: master
+        
