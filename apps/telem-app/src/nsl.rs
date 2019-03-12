@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+// Gather telemetry from the NSL duplex radio
+
 use failure::Error;
 
 pub fn get_telem() -> Result<(), Error> {

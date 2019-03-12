@@ -17,6 +17,7 @@
 mod eps;
 mod mai400;
 mod nsl;
+mod obc;
 mod oem6;
 mod sup_mcu;
 mod telem_db;
@@ -32,6 +33,10 @@ struct MyApp;
 impl AppHandler for MyApp {
     fn on_boot(&self, _args: Vec<String>) -> Result<(), Error> {
         loop {
+            if let Err(error) = obc::get_telem() {
+                error!("Error while fetching OBC telemetry: {:?}", error);
+            }
+
             if let Err(error) = eps::get_telem() {
                 error!("Error while fetching EPS telemetry: {:?}", error);
             }

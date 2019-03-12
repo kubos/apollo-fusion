@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+// Gather telemetry from the Maryland Aerospace MAI-400
+
 use crate::telem_db::{process_json, send_telem};
 use failure::{bail, Error};
 use kubos_app::*;

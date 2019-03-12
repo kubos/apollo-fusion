@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+// Gather telemetry from the Pumpkin supervisor MCUs
+
 use crate::telem_db::send_telem;
 use failure::Error;
 use kubos_app::*;

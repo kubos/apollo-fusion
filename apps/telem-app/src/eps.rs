@@ -14,13 +14,15 @@
 // limitations under the License.
 //
 
+// Gather telemetry from the Clyde Space 3rd gen EPS
+
 use crate::telem_db::{process_json, send_telem};
 use failure::Error;
 use kubos_app::*;
 use std::time::Duration;
 
 const EPS_TELEMETRY: &str = r#"{
-		telemetry {
+        telemetry {
             lastEpsError { 
                 daughterboard,
                 motherboard,    

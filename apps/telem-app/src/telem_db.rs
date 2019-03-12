@@ -14,10 +14,13 @@
 // limitations under the License.
 //
 
+// Helper functions to breakup and store data returned from the subsystems
+
 use kubos_app::*;
 use serde_json::{json, ser};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
+// Send a list of key/value pairs to the telemetry database via the direct UDP port
 pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
     let config = ServiceConfig::new("telemetry-service");
 
@@ -45,6 +48,31 @@ pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
     }
 }
 
+// Convert an unknown list of telemetry in JSON format into a flat-structured set of
+// key/value pairs.
+//
+// Example:
+// Input -
+// {
+//     telemetry {
+//         power {
+//            voltage: 5,
+//            current: 0.3
+//        },
+//        status: "Okay",
+//        position: [1.3, -4.5, 9.0]
+//    }
+// }
+//
+// Output -
+// [
+//    ("telemetry_power_voltage", "5"),
+//    ("telemetry_power_current", "0.3"),
+//    ("telemetry_status", "Okay"),
+//    ("telemetry_position_0", "1.3"),
+//    ("telemetry_position_1", "-4.5"),
+//    ("telemetry_position_2", "9.0")
+// ]
 pub fn process_json(
     mut telem_vec: &mut Vec<(String, String)>,
     data: &serde_json::Map<String, serde_json::Value>,

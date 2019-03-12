@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+// Gather telemetry from the NovAtel OEM6
+
 use crate::telem_db::{process_json, send_telem};
 use failure::Error;
 use kubos_app::*;
