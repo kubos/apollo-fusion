@@ -14,14 +14,12 @@
 // limitations under the License.
 //
 
-use failure::Error;
 use kubos_app::*;
-use kubos_system::Config;
 use serde_json::{json, ser};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 
 pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
-    let config = Config::new("telemetry-service");
+    let config = ServiceConfig::new("telemetry-service");
 
     let port = config.get("direct_port").unwrap();
 

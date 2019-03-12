@@ -15,7 +15,6 @@
 //
 
 use failure::Error;
-use kubos_app::query;
 
 pub fn get_telem() -> Result<(), Error> {
     Ok(())

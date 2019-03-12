@@ -21,8 +21,7 @@ mod oem6;
 mod sup_mcu;
 mod telem_db;
 
-use failure::{bail, Error};
-use getopts::Options;
+use failure::Error;
 use kubos_app::*;
 use log::*;
 use std::thread;
@@ -55,8 +54,6 @@ impl AppHandler for MyApp {
             
             thread::sleep(Duration::from_secs(60));
         }
-
-        Ok(())
     }
 
     fn on_command(&self, _args: Vec<String>) -> Result<(), Error> {

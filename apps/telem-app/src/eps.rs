@@ -14,8 +14,10 @@
 // limitations under the License.
 //
 
+use crate::telem_db::{process_json, send_telem};
 use failure::Error;
 use kubos_app::*;
+use std::time::Duration;
 
 const EPS_TELEMETRY: &str = r#"{
 		telemetry {
@@ -160,31 +162,61 @@ pub fn get_telem() -> Result<(), Error> {
     
     let telemetry = &result["data"]["telemetry"];
     
-    let telem_vec: Vec<(String, String)> = vec!();
+    let mut telem_vec: Vec<(String, String)> = vec!();
     
     let last_error = &telemetry["lastEpsError"];
     
-    telem_vec.push(("last_error_mb".to_owned(), last_error["motherboard"].as_str().unwrap_or("")));
-    telem_vec.push(("last_error_db".to_owned(), last_error["daughterboard"].as_str().unwrap_or("")));
+    if let Some(data) = last_error["motherboard"].as_str() {
+        telem_vec.push(("last_error_mb".to_owned(), data.to_owned()));
+    }
+    
+    if let Some(data) = last_error["daughterboard"].as_str() {
+        telem_vec.push(("last_error_mb".to_owned(), data.to_owned()));
+    }
     
     let board_status = &telemetry["boardStatus"];
     
-    telem_vec.push(("board_status_mb".to_owned(), last_error["motherboard"].as_str().unwrap_or("")));
-    telem_vec.push(("board_status_db".to_owned(), last_error["daughterboard"].as_str().unwrap_or("")));
+    if let Some(data) = board_status["motherboard"].as_str() {
+        telem_vec.push(("board_status_mb".to_owned(), data.to_owned()));
+    }
+    
+    if let Some(data) = board_status["daughterboard"].as_str() {
+        telem_vec.push(("board_status_db".to_owned(), data.to_owned()));
+    }
     
     let reset = &telemetry["reset"];
     
-    telem_vec.push(("reset_sw_mb".to_owned(), reset["automaticSoftware"]["motherboard"].as_str().unwrap_or("")));
-    telem_vec.push(("reset_sw_db".to_owned(), reset["automaticSoftware"]["daughterboard"].as_str().unwrap_or("")));
+    if let Some(data) = reset["automaticSoftware"]["motherboard"].as_str() {
+        telem_vec.push(("reset_sw_mb".to_owned(), data.to_owned()));
+    }
     
-    telem_vec.push(("reset_brownout_mb".to_owned(), reset["brownOut"]["motherboard"].as_str().unwrap_or("")));
-    telem_vec.push(("reset_brownout_db".to_owned(), reset["brownOut"]["daughterboard"].as_str().unwrap_or("")));
+    if let Some(data) = reset["automaticSoftware"]["daughterboard"].as_str() {
+        telem_vec.push(("reset_sw_db".to_owned(), data.to_owned()));
+    }
     
-    telem_vec.push(("reset_manual_mb".to_owned(), reset["manual"]["motherboard"].as_str().unwrap_or("")));
-    telem_vec.push(("reset_manual_db".to_owned(), reset["manual"]["daughterboard"].as_str().unwrap_or("")));
+    if let Some(data) = reset["brownOut"]["motherboard"].as_str() {
+        telem_vec.push(("reset_brownout_mb".to_owned(), data.to_owned()));
+    }
     
-    telem_vec.push(("reset_wd_mb".to_owned(), reset["watchdog"]["motherboard"].as_str().unwrap_or("")));
-    telem_vec.push(("reset_wd_db".to_owned(), reset["watchdog"]["daughterboard"].as_str().unwrap_or("")));
+    if let Some(data) = reset["brownOut"]["daughterboard"].as_str() {
+        telem_vec.push(("reset_brownout_db".to_owned(), data.to_owned()));
+    }
+    
+    if let Some(data) = reset["manual"]["motherboard"].as_str() {
+        telem_vec.push(("reset_manual_mb".to_owned(), data.to_owned()));
+    }
+    
+    if let Some(data) = reset["manual"]["daughterboard"].as_str() {
+        telem_vec.push(("reset_manual_db".to_owned(), data.to_owned()));
+    }
+    
+    if let Some(data) = reset["watchdog"]["motherboard"].as_str() {
+        telem_vec.push(("reset_wd_mb".to_owned(), data.to_owned()));
+    }
+    
+    if let Some(data) = reset["watchdog"]["daughterboard"].as_str() {
+        telem_vec.push(("reset_wd_db".to_owned(), data.to_owned()));
+    }
     
     let mb_telem = &telemetry["motherboard"].as_object();
     if let Some(data) = mb_telem {
@@ -192,7 +224,7 @@ pub fn get_telem() -> Result<(), Error> {
     }
     
     let db_telem = &telemetry["daughterboard"].as_object();
-    if let Some(data) = mb_telem {
+    if let Some(data) = db_telem {
         process_json(&mut telem_vec, data, "db_".to_owned());
     }
     
