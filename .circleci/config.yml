@@ -1,6 +1,6 @@
 version: 2
 jobs:
-    build:
+    os_build:
       docker:
         - image: kubos/kubos-linux-dev:latest
       working_directory: ~/project/apollo-fusion
@@ -14,5 +14,24 @@ jobs:
             path: kubos-linux.tar.gz
         - store_artifacts:
             path: aux-sd.tar.gz
-    # TODO: Add build/test case for verifying the mission application/s compile successfully
-    # (Depends on mission app being added to this repo)
+    apps_build:
+      docker:
+        - image: kubos/kubos-dev:latest
+      working_directory: ~/project/apollo-fusion/apps
+      steps:
+        - checkout
+        - run: cargo build
+    apps_clippy:
+      docker:
+        - image: kubos/kubos-dev:latest
+      working_directory: ~/project/apollo-fusion/apps
+      steps:
+        - checkout
+        - run: cargo clippy
+    rust_fmt:
+      docker:
+        - image: kubos/kubos-dev:latest
+      working_directory: ~/project/apollo-fusion/apps
+      steps:
+        - checkout
+        - run: cargo fmt -- --check

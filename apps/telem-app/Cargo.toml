@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 failure = "0.1.2"
 getopts = "0.2"
-kubos-app = { path = "../../../../kubos/apis/app-api/rust" }
-kubos-system = { path = "../../../../kubos/apis/system-api" }
+kubos-app = { git = "https://github.com/kubos/kubos" }
+kubos-system = { git = "https://github.com/kubos/kubos" }
 log = "^0.4.0"
 serde_json = "1.0"
