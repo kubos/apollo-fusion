@@ -60,7 +60,7 @@ impl AppHandler for MyApp {
         if let Err(error) = obc::get_telem() {
             error!("Error while fetching OBC telemetry: {:?}", error);
         }
-                    
+
         if let Err(error) = eps::get_telem() {
             error!("Error while fetching EPS telemetry: {:?}", error);
         }
