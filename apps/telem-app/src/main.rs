@@ -1,5 +1,20 @@
-#![recursion_limit="256"]
-//mod eps;
+//
+// Copyright (C) 2019 Kubos Corporation
+//
+// Licensed under the Apache License, Version 2.0 (the "License")
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+mod eps;
 mod mai400;
 mod nsl;
 mod oem6;
@@ -17,15 +32,14 @@ struct MyApp;
 
 impl AppHandler for MyApp {
     fn on_boot(&self, _args: Vec<String>) -> Result<(), Error> {
-        info!("OnBoot logic");
-        
         // TODO:
         //  - Put in loop
         //  - Potentially put each subsystem in own thread
-        //if let Err(error) = eps::get_telem() {
-        //    error!("Error while fetching EPS telemetry: {:?}", error);
-        //}
         
+        if let Err(error) = eps::get_telem() {
+            error!("Error while fetching EPS telemetry: {:?}", error);
+        }
+
         if let Err(error) = mai400::get_telem() {
             error!("Error while fetching MAI-400 telemetry: {:?}", error);
         }
@@ -41,7 +55,7 @@ impl AppHandler for MyApp {
         if let Err(error) = sup_mcu::get_telem() {
             error!("Error while fetching Sup MCU telemetry: {:?}", error);
         }
-        
+
         Ok(())
     }
 

@@ -13,3 +13,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
+
+use failure::Error;
+use kubos_app::*;
+use kubos_system::Config;
+use serde_json::{json, ser};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
+
+pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
+    let config = Config::new("telemetry-service");
+
+    let port = config.get("direct_port").unwrap();
+
+    let host = config.hosturl().to_owned();
+    let ip: Vec<&str> = host.split(':').collect();
+
+    let remote_addr = format!("{}:{}", ip[0], port);
+
+    let local_addr = SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)), 0);
+
+    let socket = UdpSocket::bind(local_addr).expect("Couldn't bind to address");
+
+    for (key, value) in telem_vec.iter() {
+        let message = json!({
+            "subsystem": subsystem,
+            "parameter": key,
+            "value": value
+        });
+
+        socket
+            .send_to(&ser::to_vec(&message).unwrap(), &remote_addr)
+            .unwrap();
+    }
+}
+
+pub fn process_json(
+    mut telem_vec: &mut Vec<(String, String)>,
+    data: &serde_json::Map<String, serde_json::Value>,
+    prefix: String,
+) {
+    for (key, value) in data.iter() {
+        match value {
+            serde_json::Value::Object(object) => {
+                process_json(&mut telem_vec, object, format!("{}{}_", prefix, key))
+            }
+            serde_json::Value::Array(array) => {
+                for (index, val) in array.iter().enumerate() {
+                    telem_vec.push((format!("{}{}_{}", prefix, key, index), format!("{}", val)))
+                }
+            }
+            _ => telem_vec.push((format!("{}{}", prefix, key), format!("{}", value))),
+        }
+    }
+}
