@@ -16,7 +16,6 @@
 
 mod eps;
 mod mai400;
-mod nsl;
 mod obc;
 mod oem6;
 mod sup_mcu;
@@ -45,10 +44,6 @@ impl AppHandler for MyApp {
                 error!("Error while fetching MAI-400 telemetry: {:?}", error);
             }
 
-            if let Err(error) = nsl::get_telem() {
-                error!("Error while fetching NSL radio telemetry: {:?}", error);
-            }
-
             if let Err(error) = oem6::get_telem() {
                 error!("Error while fetching OEM6 telemetry: {:?}", error);
             }
@@ -62,16 +57,16 @@ impl AppHandler for MyApp {
     }
 
     fn on_command(&self, _args: Vec<String>) -> Result<(), Error> {
+        if let Err(error) = obc::get_telem() {
+            error!("Error while fetching OBC telemetry: {:?}", error);
+        }
+                    
         if let Err(error) = eps::get_telem() {
             error!("Error while fetching EPS telemetry: {:?}", error);
         }
 
         if let Err(error) = mai400::get_telem() {
             error!("Error while fetching MAI-400 telemetry: {:?}", error);
-        }
-
-        if let Err(error) = nsl::get_telem() {
-            error!("Error while fetching NSL radio telemetry: {:?}", error);
         }
 
         if let Err(error) = oem6::get_telem() {

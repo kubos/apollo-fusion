@@ -231,7 +231,6 @@ pub fn get_telem() -> Result<(), Error> {
 
     if let Some(data) = debug {
         process_json(&mut telem_vec, data, "".to_owned());
-        // TODO: Breakout rotating variables
     }
 
     // Send it to the telemetry database
