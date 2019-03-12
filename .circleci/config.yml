@@ -17,24 +17,21 @@ jobs:
     apps_build:
       docker:
         - image: kubos/kubos-dev:latest
-      working_directory: ~/project/apollo-fusion/apps
       steps:
         - checkout
-        - run: cargo build
+        - run: cd apps; cargo build
     apps_clippy:
       docker:
         - image: kubos/kubos-dev:latest
-      working_directory: ~/project/apollo-fusion/apps
       steps:
         - checkout
-        - run: cargo clippy
+        - run: cd apps; cargo clippy
     apps_fmt:
       docker:
         - image: kubos/kubos-dev:latest
-      working_directory: ~/project/apollo-fusion/apps
       steps:
         - checkout
-        - run: cargo fmt -- --check
+        - run: cd apps; cargo fmt -- --check
     
 workflows:
   version: 2
