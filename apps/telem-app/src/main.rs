@@ -32,35 +32,53 @@ struct MyApp;
 
 impl AppHandler for MyApp {
     fn on_boot(&self, _args: Vec<String>) -> Result<(), Error> {
-        // TODO:
-        //  - Put in loop
-        //  - Potentially put each subsystem in own thread
-        
-        if let Err(error) = eps::get_telem() {
-            error!("Error while fetching EPS telemetry: {:?}", error);
-        }
-
-        if let Err(error) = mai400::get_telem() {
-            error!("Error while fetching MAI-400 telemetry: {:?}", error);
-        }
-
-        if let Err(error) = nsl::get_telem() {
-            error!("Error while fetching NSL radio telemetry: {:?}", error);
-        }
-
-        if let Err(error) = oem6::get_telem() {
-            error!("Error while fetching OEM6 telemetry: {:?}", error);
-        }
-
-        if let Err(error) = sup_mcu::get_telem() {
-            error!("Error while fetching Sup MCU telemetry: {:?}", error);
+        loop {
+            if let Err(error) = eps::get_telem() {
+                error!("Error while fetching EPS telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = mai400::get_telem() {
+                error!("Error while fetching MAI-400 telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = nsl::get_telem() {
+                error!("Error while fetching NSL radio telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = oem6::get_telem() {
+                error!("Error while fetching OEM6 telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = sup_mcu::get_telem() {
+                error!("Error while fetching Sup MCU telemetry: {:?}", error);
+            }
+            
+            thread::sleep(Duration::from_secs(60));
         }
 
         Ok(())
     }
 
     fn on_command(&self, _args: Vec<String>) -> Result<(), Error> {
-        info!("OnCommand logic called");
+            if let Err(error) = eps::get_telem() {
+                error!("Error while fetching EPS telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = mai400::get_telem() {
+                error!("Error while fetching MAI-400 telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = nsl::get_telem() {
+                error!("Error while fetching NSL radio telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = oem6::get_telem() {
+                error!("Error while fetching OEM6 telemetry: {:?}", error);
+            }
+    
+            if let Err(error) = sup_mcu::get_telem() {
+                error!("Error while fetching Sup MCU telemetry: {:?}", error);
+            }
 
         Ok(())
     }

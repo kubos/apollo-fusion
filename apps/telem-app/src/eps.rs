@@ -186,15 +186,18 @@ pub fn get_telem() -> Result<(), Error> {
     telem_vec.push(("reset_wd_mb".to_owned(), reset["watchdog"]["motherboard"].as_str().unwrap_or("")));
     telem_vec.push(("reset_wd_db".to_owned(), reset["watchdog"]["daughterboard"].as_str().unwrap_or("")));
     
-    let mb_telem = &telemetry["motherboard"];
+    let mb_telem = &telemetry["motherboard"].as_object();
+    if let Some(data) = mb_telem {
+        process_json(&mut telem_vec, data, "mb_".to_owned());
+    }
     
-    // TODO: Cycle through all telem items and add to list
+    let db_telem = &telemetry["daughterboard"].as_object();
+    if let Some(data) = mb_telem {
+        process_json(&mut telem_vec, data, "db_".to_owned());
+    }
     
-    let db_telem = &telemetry["daughterboard"];
-    
-    // TODO: Cycle through all telem items and add to list
-    
-    // TODO: Save to database
+    // Send all the telemetry to the telemetry database
+    send_telem("EPS", telem_vec);
     
     Ok(())
 }
