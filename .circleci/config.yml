@@ -14,8 +14,24 @@ jobs:
             path: kubos-linux.tar.gz
         - store_artifacts:
             path: aux-sd.tar.gz
-    # TODO: Add build/test case for verifying the mission application/s compile successfully
-    # (Depends on mission app being added to this repo)
+    apps_build:
+      docker:
+        - image: kubos/kubos-dev:latest
+      steps:
+        - checkout
+        - run: cd apps; cargo build
+    apps_clippy:
+      docker:
+        - image: kubos/kubos-dev:latest
+      steps:
+        - checkout
+        - run: cd apps; cargo clippy
+    apps_fmt:
+      docker:
+        - image: kubos/kubos-dev:latest
+      steps:
+        - checkout
+        - run: cd apps; cargo fmt -- --check
     
 workflows:
   version: 2
@@ -27,3 +43,16 @@ workflows:
               only: /^[0-9]+(\.[0-9]+)*$/
             branches:
               ignore: master
+      - apps_build:
+          filters:
+            branches:
+              ignore: master
+      - apps_clippy:
+          filters:
+            branches:
+              ignore: master
+      - apps_fmt:
+          filters:
+            branches:
+              ignore: master
+        
