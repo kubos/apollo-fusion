@@ -1,0 +1,7 @@
+[package]
+name = "watchdog-app"
+version = "0.1.0"
+authors = ["Catherine Garabedian <catherine@kubos.co>"]
+edition = "2018"
+
+[dependencies]
