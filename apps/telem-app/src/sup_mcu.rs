@@ -42,9 +42,11 @@ pub fn get_telem() -> Result<(), Error> {
         let mut telem_vec: Vec<(String, String)> = vec![];
         if let Some(inner) = telem.as_object() {
             for (key, value) in inner.iter() {
-                let data = &value["data"];
-
-                telem_vec.push((key.to_owned(), format!("{}", data)));
+                if value["timestamp"] != 0 {
+                    let data = &value["data"];
+    
+                    telem_vec.push((key.to_owned(), format!("{}", data)));
+                }
             }
         }
 

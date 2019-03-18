@@ -1,6 +1,8 @@
 [workspace]
 members = [
-"telem-app"
+"deploy-app",
+"telem-app",
+"watchdog-app"
 ]
 
 [profile.release]
