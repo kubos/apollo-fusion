@@ -44,7 +44,7 @@ pub fn get_telem() -> Result<(), Error> {
             for (key, value) in inner.iter() {
                 if value["timestamp"] != 0 {
                     let data = &value["data"];
-    
+
                     telem_vec.push((key.to_owned(), format!("{}", data)));
                 }
             }
