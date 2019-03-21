@@ -44,31 +44,45 @@ pub fn deploy() -> Result<(), Error> {
     if status == DeployStatus::Ready {
         // Deploy the panels (BIM)
         // TODO: What happens if deployment fails?
+        let mut success = true;
         if let Err(error) = query(&mcu_service, DEPLOY_ENABLE, Some(QUERY_TIMEOUT)) {
             error!("Failed to enable deploy pin: {:?}", error);
+            success = false;
         };
         thread::sleep(Duration::from_millis(100));
         if let Err(error) = query(&mcu_service, DEPLOY_ARM, Some(QUERY_TIMEOUT)) {
             error!("Failed to arm deploy pin: {:?}", error);
+            success = false;
         };
         thread::sleep(Duration::from_millis(100));
         if let Err(error) = query(&mcu_service, DEPLOY_FIRE, Some(QUERY_TIMEOUT)) {
             error!("Failed to fire deploy pin: {:?}", error);
+            success = false;
         };
 
         /*
+        // TODO: Verify deployment
+
         // Max firing time is 30 seconds
         // Ideally, deployment will be instantaneous
         thread::sleep(Duration::from_secs(30));
 
-        // TODO: Verify deployment
         "We'll need to characterize the power input into the EPS with and without the solar panels
         deployed, but generally if the craft is getting more power than before the firing sequence
-        has happened, then the panels are deployed."
+        has happened, then the panels are deployed.
+
+        Another way to check to see if the TiNi mechanism as successfully deployed is to check the
+        current draw on the 5V bus.
+        If the current draw has increased by ~2A while the fire command is active, then the TiNi
+        hasn't released mechanically yet. The TiNi deployer goes open circuit when it has
+        mechanically released the latch holding the panels and won't pull any current even if the
+        fire command is active.
         */
 
         // Mark the system as deployed
-        let _result = set_boot_var("deployed", "true");
+        if success {
+            let _result = set_boot_var("deployed", "true");
+        }
     }
 
     // Turn on radios:
@@ -89,9 +103,25 @@ pub fn deploy() -> Result<(), Error> {
 
     // Start transmitting H&S beacon
     let app_service = ServiceConfig::new("app-service");
-    if let Err(error) = query(&app_service, START_BEACON, Some(QUERY_TIMEOUT)) {
-        error!("Failed to start beacon app: {:?}", error);
-    };
+    match query(&app_service, START_BEACON, Some(QUERY_TIMEOUT)) {
+        Ok(msg) => {
+            let success = msg
+                .get("startApp")
+                .and_then(|data| data.get("success").and_then(|val| val.as_bool()));
+
+            if success == Some(true) {
+                info!("Successfully started beacon app");
+            } else {
+                match msg.get("errors") {
+                    Some(errors) => error!("Failed to start beacon app: {}", errors),
+                    None => error!("Failed to start beacon app"),
+                };
+            }
+        }
+        Err(err) => {
+            error!("Failed to start beacon app: {:?}", err);
+        }
+    }
 
     Ok(())
 }
