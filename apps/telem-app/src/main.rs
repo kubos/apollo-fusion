@@ -36,6 +36,7 @@ impl AppHandler for MyApp {
                 error!("Error while fetching OBC telemetry: {:?}", error);
             }
 
+            /*
             if let Err(error) = eps::get_telem() {
                 error!("Error while fetching EPS telemetry: {:?}", error);
             }
@@ -51,6 +52,7 @@ impl AppHandler for MyApp {
             if let Err(error) = sup_mcu::get_telem() {
                 error!("Error while fetching Sup MCU telemetry: {:?}", error);
             }
+            */
 
             thread::sleep(Duration::from_secs(60));
         }
@@ -60,6 +62,7 @@ impl AppHandler for MyApp {
         if let Err(error) = obc::get_telem() {
             error!("Error while fetching OBC telemetry: {:?}", error);
         }
+        /*
 
         if let Err(error) = eps::get_telem() {
             error!("Error while fetching EPS telemetry: {:?}", error);
@@ -76,7 +79,7 @@ impl AppHandler for MyApp {
         if let Err(error) = sup_mcu::get_telem() {
             error!("Error while fetching Sup MCU telemetry: {:?}", error);
         }
-
+        */
         Ok(())
     }
 }
