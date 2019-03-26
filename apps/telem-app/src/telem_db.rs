@@ -24,7 +24,9 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
 pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
     let config = ServiceConfig::new("telemetry-service");
 
-    let port = config.get("direct_port").expect("No `direct_port` param given");;
+    let port = config
+        .get("direct_port")
+        .expect("No `direct_port` param given");;
 
     let host = config.hosturl().to_owned();
     let ip: Vec<&str> = host.split(':').collect();

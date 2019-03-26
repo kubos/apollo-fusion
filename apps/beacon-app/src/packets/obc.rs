@@ -33,10 +33,8 @@ use log::*;
 use std::thread;
 use std::time::Duration;
 
-// TODO: Remove timestamp. For development, we want to verify that we're getting the latest value,
-// but we don't need it in production
 const STORAGE_QUERY: &str = r#"{
-    telemetry(subsystem: "OBC", parameter: "memory_free", limit: 1) {
+    telemetry(subsystem: "OBC", parameter: "memory_available", limit: 1) {
         timestamp,
         value
     }
@@ -47,7 +45,8 @@ const STORAGE_QUERY: &str = r#"{
 const MEM_TOTAL: f32 = 515340.0;
 
 pub fn obc_packet(radios: Radios) {
-    // TODO: Get total memory so that we can calculate the percent available
+    let mut last_timestamp: String = "".to_string();
+
     loop {
         // Get last known memory values from telem db
         match query(
@@ -56,13 +55,19 @@ pub fn obc_packet(radios: Radios) {
             Some(Duration::from_millis(100)),
         ) {
             Ok(data) => {
-                // TODO: Add logic to make sure that we get a new value every time
-                // (Check that the timestamp has changed)
                 let mem: f32 = data["telemetry"][0]["value"]
                     .as_str()
                     .and_then(|val| val.parse().ok())
                     .unwrap_or(MEM_TOTAL);
-                println!("Raw mem available: {:?}", mem);
+
+                // Verify that this is a new value, not a repeat from the last time we asked
+                let timestamp = data["telemetry"][0]["timestamp"].as_str().unwrap_or("");
+                if timestamp == last_timestamp {
+                    error!("Available memory timestamp has not changed");
+                } else {
+                    last_timestamp = timestamp.to_string();
+                }
+
                 // Convert to percentage, since that's a smaller number and basically what we care
                 // about anyways
                 let percent = (mem / MEM_TOTAL) * 100.0;

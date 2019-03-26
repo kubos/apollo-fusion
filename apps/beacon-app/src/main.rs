@@ -45,7 +45,12 @@ impl AppHandler for MyApp {
 
         // Spawn threads for each of the beacon messages
         debug!("Spawning OBC beacon thread");
-        let handle = thread::spawn(move || obc::obc_packet(radios.clone()));
+        let obc_radios = radios.clone();
+        let handle = thread::spawn(move || obc::obc_packet(obc_radios));
+
+        debug!("Spawning temperature beacon thread");
+        let temp_radios = radios.clone();
+        let handle = thread::spawn(move || temperature::temp_packet(temp_radios));
 
         // TODO: Stay in a loop forever so the threads keep going
 
