@@ -35,6 +35,7 @@ impl AppHandler for MyApp {
     }
 
     fn on_command(&self, _args: Vec<String>) -> Result<(), Error> {
+        let mut handles = vec![];
         // TODO: Which UART for simplex?
         let simplex = SimplexS3::new("/dev/ttyS2")?;
         let telem_service = ServiceConfig::new("telemetry-service");
@@ -44,26 +45,36 @@ impl AppHandler for MyApp {
         };
 
         // Spawn threads for each of the beacon messages
-        debug!("Spawning OBC beacon thread");
         let obc_radios = radios.clone();
         let handle = thread::spawn(move || obc::obc_packet(obc_radios));
+        info!("Spawning OBC beacon thread: {:?}", handle.thread().id());
+        handles.push(handle);
 
-        debug!("Spawning temperature beacon thread");
         let temp_radios = radios.clone();
         let handle = thread::spawn(move || temperature::temp_packet(temp_radios));
+        info!("Spawning temperature beacon thread: {:?}", handle.thread().id());
+        handles.push(handle);
+        
+        let temp_radios = radios.clone();
+        let handle = thread::spawn(move || supmcu::supmcu_packet(temp_radios));
+        info!("Spawning supMCU beacon thread: {:?}", handle.thread().id());
+        handles.push(handle);
 
         // TODO: Stay in a loop forever so the threads keep going
-
-        if let Err(error) = handle.join() {
-            error!("OBC thread panicked: {:?}", error);
+        for handle in handles {
+            let id = handle.thread().id();
+            if let Err(error) = handle.join() {
+                error!("Child thread {:?} panicked: {:?}", id, error);
+            }
         }
+        
         Ok(())
     }
 }
 
 fn main() -> Result<(), Error> {
     let app = MyApp;
-    app_main!(&app)?;
+    app_main!(&app, log::LevelFilter::Info)?;
 
     Ok(())
 }

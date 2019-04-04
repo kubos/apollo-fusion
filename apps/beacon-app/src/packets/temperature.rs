@@ -16,7 +16,7 @@
 
 // Gather all available temperature readings every 15 minutes
 //
-// Message layout (28 bytes):
+// Message layout (20 bytes):
 //  0: EPS motherboard tempurature
 //  1: EPS daughterboard
 //  2: EPS BCR 2 Side A
@@ -27,24 +27,16 @@
 //  7: EPS BCR 9 Side B
 //  8: MAI-400 gyroscope
 //  9: MAI-400 RWS motor
-// 10: MAI-400 Detector A Earth Limb Thermistor
-// 11: MAI-400 Detector A Earth Ref Thermistor
-// 12: MAI-400 Detector A Space Ref Thermistor
-// 13: MAI-400 Detector A Wide FOV Thermistor
-// 14: MAI-400 Detector B Earth Limb Thermistor
-// 15: MAI-400 Detector B Earth Ref Thermistor
-// 16: MAI-400 Detector B Space Ref Thermistor
-// 17: MAI-400 Detector B Wide FOV Thermistor
-// 18: BIM temperature sensor 1
-// 19: BIM temperature sensor 2
-// 20: BIM temperature sensor 3
-// 21: BIM temperature sensor 4
-// 22: BIM temperature sensor 5
-// 23: BIM temperature sensor 6
-// 24: BM2 internal temperature sensor
-// 25: BM2 external temperature sensor 1 (TS1)
-// 26: BM2 external temperature sensor 2 (TS2)
-// 27: BM2 temperature range bit field - See section B.30 of the bq34z653 Technical Reference for details
+// 10: BIM temperature sensor 1
+// 11: BIM temperature sensor 2
+// 12: BIM temperature sensor 3
+// 13: BIM temperature sensor 4
+// 14: BIM temperature sensor 5
+// 15: BIM temperature sensor 6
+// 16: BM2 internal temperature sensor
+// 17: BM2 external temperature sensor 1 (TS1)
+// 18: BM2 external temperature sensor 2 (TS2)
+// 19: BM2 temperature range bit field - See section B.30 of the bq34z653 Technical Reference for details
 
 use crate::transmit::*;
 use failure::format_err;
@@ -97,54 +89,6 @@ const EPS_BCR9A_TEMP: &str = r#"{
 
 const EPS_BCR9B_TEMP: &str = r#"{
     telemetry(subsystem: "EPS", parameter: "db_ArrayTempSa9b", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_A_EARTHLIMB: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructA_earthLimb_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_A_EARTHREF: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructA_earthRef_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_A_SPACEREF: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructA_spaceRef_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_A_WIDEFOV: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructA_wideFOV_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_B_EARTHLIMB: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructB_earthLimb_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_B_EARTHREF: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructB_earthRef_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_B_SPACEREF: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructB_spaceRef_temp", limit: 1) {
-        value
-    }
-}"#;
-
-const MAI_THERMOPILE_B_WIDEFOV: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "irehs_thermopileStructB_wideFOV_temp", limit: 1) {
         value
     }
 }"#;
@@ -249,19 +193,6 @@ pub fn temp_packet(radios: Radios) {
         let eps_bcr9a_temp: u8 = (get_string(&radios, EPS_BCR9A_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
         let eps_bcr9b_temp: u8 = (get_string(&radios, EPS_BCR9B_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
 
-        // TODO: Verify that a) we want/care about these values and
-        // b) that the conversion equation is correct
-        // 0.8059 mV per lsb
-        // - There is likely an equation for converting from the voltage measured to the temperature
-        //   measured
-        let mai_thermopile_a_earthlimb = get_string(&radios, MAI_THERMOPILE_A_EARTHLIMB);
-        let mai_thermopile_a_earthref = get_string(&radios, MAI_THERMOPILE_A_EARTHREF);
-        let mai_thermopile_a_spaceref = get_string(&radios, MAI_THERMOPILE_A_SPACEREF);
-        let mai_thermopile_a_widefov = get_string(&radios, MAI_THERMOPILE_A_WIDEFOV);
-        let mai_thermopile_b_earthlimb = get_string(&radios, MAI_THERMOPILE_B_EARTHLIMB);
-        let mai_thermopile_b_earthref = get_string(&radios, MAI_THERMOPILE_B_EARTHREF);
-        let mai_thermopile_b_spaceref = get_string(&radios, MAI_THERMOPILE_B_SPACEREF);
-        let mai_thermopile_b_widefov = get_string(&radios, MAI_THERMOPILE_B_WIDEFOV);
         // No conversion needed. Raw value is *C, u8
         let mai_gyro_temp: u8 = get_string(&radios, MAI_GYRO_TEMP).parse().unwrap_or(0);
         // Temperature *C = gs_rwsMotorTemp * 0.0402930 - 50
@@ -309,7 +240,7 @@ pub fn temp_packet(radios: Radios) {
         let bm2_temp_range = (raw & 0x003F) as u8;
 
         // Turn into data packet
-        let msg: [u8; 28] = [
+        let msg: [u8; 20] = [
             eps_mb_temp,
             eps_db_temp,
             eps_bcr2a_temp,
@@ -320,14 +251,6 @@ pub fn temp_packet(radios: Radios) {
             eps_bcr9b_temp,
             mai_gyro_temp,
             mai_motor_temp,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
             bim_temp0,
             bim_temp1,
             bim_temp2,
