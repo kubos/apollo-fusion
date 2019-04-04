@@ -94,7 +94,7 @@ pub fn get_telem() -> Result<(), Error> {
     let service = ServiceConfig::new("novatel-oem6-service");
 
     // Get all the basic telemetry
-    let result = query(&service, OEM6_TELEMETRY, Some(Duration::from_secs(1)))?;
+    let result = query(&service, OEM6_TELEMETRY, Some(Duration::from_secs(2)))?;
 
     let mut telem_vec: Vec<(String, String)> = vec![];
     let nominal = &result["telemetry"]["nominal"].as_object();

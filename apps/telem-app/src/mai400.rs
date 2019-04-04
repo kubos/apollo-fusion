@@ -214,7 +214,7 @@ pub fn get_telem() -> Result<(), Error> {
 
     // Get all the basic telemetry
 
-    let result = query(&service, MAI_TELEMETRY, Some(Duration::from_millis(100)))?;
+    let result = query(&service, MAI_TELEMETRY, Some(Duration::from_secs(2)))?;
 
     if result["telemetry"]["nominal"]["gpsTime"] == 0 {
         bail!("MAI-400 offline");
