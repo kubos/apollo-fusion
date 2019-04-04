@@ -156,7 +156,7 @@ const MAI_GYRO_TEMP: &str = r#"{
 }"#;
 
 const MAI_MOTOR_TEMP: &str = r#"{
-    telemetry(subsystem: "MAI400", parameter: "rotating_rwsMotorTemp", limit: 1) {
+    telemetry(subsystem: "MAI400", parameter: "rwsMotorTemp", limit: 1) {
         value
     }
 }"#;
