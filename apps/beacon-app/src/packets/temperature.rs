@@ -38,6 +38,14 @@
 // 18: BM2 external temperature sensor 2 (TS2)
 // 19: BM2 temperature range bit field - See section B.30 of the bq34z653 Technical Reference for details
 
+// BM2 temperature range bit field
+// 01: Temp < JT1 (below minimum operating temperature)
+// 02: JT1  < Temp < JT2  (low, but okay temperature)
+// 04: JT2  < Temp < JT2a (nominal temperature range 1)
+// 08: JT2a < Temp < JT3  (nominal temperature range 2
+// 10: JT3  < Temp < JT4  (high, but okay temperature)
+// 20: JT4  < Temp (above maximum operating temperature)
+
 use crate::transmit::*;
 use failure::format_err;
 use kubos_app::{query, ServiceConfig};
@@ -178,25 +186,42 @@ pub fn temp_packet(radios: Radios) {
     // Turn on the BIM's temperature sensors
     let service = ServiceConfig::new("pumpkin-mcu-service");
 
-    let bim_sensors = query(&service, BIM_SENSOR_POWER, Some(Duration::from_millis(500))).is_ok(); 
-    
+    let bim_sensors = query(&service, BIM_SENSOR_POWER, Some(Duration::from_millis(500))).is_ok();
+
     loop {
         // Float, *C. Operating temp -40 - 100*C, so can be represented by signed byte (i8)
         // Note: BCR 1, 2, 6, 7, 8, and 9 are connected, but only 2, 8, and 9 have temperature
         // sensors available
-        let eps_mb_temp: u8 = (get_string(&radios, EPS_MB_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_db_temp: u8 = (get_string(&radios, EPS_DB_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_bcr2a_temp: u8 = (get_string(&radios, EPS_BCR2A_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_bcr2b_temp: u8 = (get_string(&radios, EPS_BCR2B_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_bcr8a_temp: u8 = (get_string(&radios, EPS_BCR8A_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_bcr8b_temp: u8 = (get_string(&radios, EPS_BCR8B_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_bcr9a_temp: u8 = (get_string(&radios, EPS_BCR9A_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
-        let eps_bcr9b_temp: u8 = (get_string(&radios, EPS_BCR9B_TEMP).parse::<f64>().unwrap_or(0.0) as i8) as u8;
+        let eps_mb_temp: u8 = (get_string(&radios, EPS_MB_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_db_temp: u8 = (get_string(&radios, EPS_DB_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_bcr2a_temp: u8 = (get_string(&radios, EPS_BCR2A_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_bcr2b_temp: u8 = (get_string(&radios, EPS_BCR2B_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_bcr8a_temp: u8 = (get_string(&radios, EPS_BCR8A_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_bcr8b_temp: u8 = (get_string(&radios, EPS_BCR8B_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_bcr9a_temp: u8 = (get_string(&radios, EPS_BCR9A_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
+        let eps_bcr9b_temp: u8 = (get_string(&radios, EPS_BCR9B_TEMP)
+            .parse::<f64>()
+            .unwrap_or(0.0) as i8) as u8;
 
         // No conversion needed. Raw value is *C, u8
         let mai_gyro_temp: u8 = get_string(&radios, MAI_GYRO_TEMP).parse().unwrap_or(0);
         // Temperature *C = gs_rwsMotorTemp * 0.0402930 - 50
-        let mai_motor_temp: u8 = if let Ok(raw) = get_string(&radios, MAI_MOTOR_TEMP).parse::<i16>() {
+        let mai_motor_temp: u8 = if let Ok(raw) = get_string(&radios, MAI_MOTOR_TEMP).parse::<i16>()
+        {
             ((f32::from(raw) * 0.0402930 - 50.0) as i8) as u8
         } else {
             0
@@ -206,25 +231,36 @@ pub fn temp_packet(radios: Radios) {
         // Setting the default values to `273.15` so that the resulting value is zero if we can't
         // get a good value
         let (bim_temp0, bim_temp1, bim_temp2, bim_temp3, bim_temp4, bim_temp5) = if bim_sensors {
-            let temp0: u8 = 
-                ((get_string(&radios, BIM_TEMP0).parse::<f64>().unwrap_or(273.15) - 273.15) as i8) as u8;
-            let temp1: u8 =
-                ((get_string(&radios, BIM_TEMP1).parse::<f64>().unwrap_or(273.15) - 273.15) as i8) as u8;
-            let temp2: u8 =
-                ((get_string(&radios, BIM_TEMP2).parse::<f64>().unwrap_or(273.15) - 273.15) as i8) as u8;
-            let temp3: u8 =
-                ((get_string(&radios, BIM_TEMP3).parse::<f64>().unwrap_or(273.15) - 273.15) as i8) as u8;
-            let temp4: u8 =
-                ((get_string(&radios, BIM_TEMP4).parse::<f64>().unwrap_or(273.15) - 273.15) as i8) as u8;
-            let temp5: u8 =
-                ((get_string(&radios, BIM_TEMP5).parse::<f64>().unwrap_or(273.15) - 273.15) as i8) as u8;
-                
+            let temp0: u8 = ((get_string(&radios, BIM_TEMP0)
+                .parse::<f64>()
+                .unwrap_or(273.15)
+                - 273.15) as i8) as u8;
+            let temp1: u8 = ((get_string(&radios, BIM_TEMP1)
+                .parse::<f64>()
+                .unwrap_or(273.15)
+                - 273.15) as i8) as u8;
+            let temp2: u8 = ((get_string(&radios, BIM_TEMP2)
+                .parse::<f64>()
+                .unwrap_or(273.15)
+                - 273.15) as i8) as u8;
+            let temp3: u8 = ((get_string(&radios, BIM_TEMP3)
+                .parse::<f64>()
+                .unwrap_or(273.15)
+                - 273.15) as i8) as u8;
+            let temp4: u8 = ((get_string(&radios, BIM_TEMP4)
+                .parse::<f64>()
+                .unwrap_or(273.15)
+                - 273.15) as i8) as u8;
+            let temp5: u8 = ((get_string(&radios, BIM_TEMP5)
+                .parse::<f64>()
+                .unwrap_or(273.15)
+                - 273.15) as i8) as u8;
+
             (temp0, temp1, temp2, temp3, temp4, temp5)
-            
         } else {
             (0, 0, 0, 0, 0, 0)
         };
-        
+
         // u16, 0.1*K. Convert to whole *C
         let raw: u16 = get_string(&radios, BM2_TEMP).parse().unwrap_or(2730);
         let bm2_temp: u8 = (raw / 10 - 273) as u8;

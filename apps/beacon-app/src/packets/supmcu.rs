@@ -65,35 +65,53 @@ pub fn supmcu_packet(radios: Radios) {
     loop {
         let mut msg = vec![];
         for module in modules.iter() {
-            let request = format!(r#"{{
+            let request = format!(
+                r#"{{
                 telemetry(subsystem: "{}", parameter: "time", limit: 1) {{
                     value
                 }}
-            }}"#, module);
-            
-            let uptime: u8 = if let Ok(data) = query(&radios.telem_service, &request, Some(Duration::from_millis(500))) {
+            }}"#,
+                module
+            );
+
+            let uptime: u8 = if let Ok(data) = query(
+                &radios.telem_service,
+                &request,
+                Some(Duration::from_millis(500)),
+            ) {
                 let raw = data["telemetry"][0]["value"].as_str().unwrap_or("");
                 let conv = raw.parse::<u64>().unwrap_or(0);
                 conv as u8
             } else {
                 0
             };
-            
+
             msg.push(uptime);
-            
-            let request = format!(r#"{{
+
+            let request = format!(
+                r#"{{
                 telemetry(subsystem: "{}", parameter: "reset_cause", limit: 1) {{
                     value
                 }}
-            }}"#, module);
-            
-            let reset: u16 = if let Ok(data) = query(&radios.telem_service, &request, Some(Duration::from_millis(500))) {
-                let value = data["telemetry"][0]["value"].as_str().unwrap_or("").parse::<u16>().unwrap_or(0xFFFF);
+            }}"#,
+                module
+            );
+
+            let reset: u16 = if let Ok(data) = query(
+                &radios.telem_service,
+                &request,
+                Some(Duration::from_millis(500)),
+            ) {
+                let value = data["telemetry"][0]["value"]
+                    .as_str()
+                    .unwrap_or("")
+                    .parse::<u16>()
+                    .unwrap_or(0xFFFF);
                 value as u16
             } else {
                 0xFFFF
             };
-            
+
             msg.push(((reset & 0xFF00) >> 8) as u8);
             msg.push((reset & 0x00FF) as u8);
         }
