@@ -159,7 +159,7 @@ pub fn get_telem() -> Result<(), Error> {
     // Get all the basic telemetry
     // It takes 60ms to fetch a single field
     let result = query(&service, EPS_TELEMETRY, Some(Duration::from_secs(200)))?;
-    
+
     println!("EPS Result: {:?}", result);
 
     let telemetry = &result["telemetry"];
@@ -199,11 +199,17 @@ pub fn get_telem() -> Result<(), Error> {
     }
 
     if let Some(data) = reset["brownOut"]["motherboard"].as_u64() {
-        telem_vec.push(("reset_brownout_mb".to_owned(), format!("{}", data).to_owned()));
+        telem_vec.push((
+            "reset_brownout_mb".to_owned(),
+            format!("{}", data).to_owned(),
+        ));
     }
 
     if let Some(data) = reset["brownOut"]["daughterboard"].as_u64() {
-        telem_vec.push(("reset_brownout_db".to_owned(), format!("{}", data).to_owned()));
+        telem_vec.push((
+            "reset_brownout_db".to_owned(),
+            format!("{}", data).to_owned(),
+        ));
     }
 
     if let Some(data) = reset["manual"]["motherboard"].as_u64() {

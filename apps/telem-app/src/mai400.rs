@@ -224,7 +224,7 @@ pub fn get_telem() -> Result<(), Error> {
 
     // The MAI-400 has a *bunch* of fields, so we're going to break this into three chunks to
     // help reduce the amount of data returned at one time
-    
+
     // Get the nominal telemetry
 
     let result = query(&service, MAI_NOMINAL, Some(Duration::from_secs(2)))?;
@@ -232,19 +232,19 @@ pub fn get_telem() -> Result<(), Error> {
     if result["telemetry"]["nominal"]["gpsTime"] == 0 {
         bail!("MAI-400 offline");
     }
-    
+
     let nominal = &result["telemetry"]["nominal"].as_object();
     println!("MAI-400 Nominal Telemetry:\n{:#?}", nominal);
 
     let mut telem_vec: Vec<(String, String)> = vec![];
-    
+
     // Auto-convert returned JSON into a flat key-value vector
     if let Some(data) = nominal {
         process_json(&mut telem_vec, data, "".to_owned());
         // Send it to the telemetry database
         send_telem("MAI400", telem_vec);
     }
-    
+
     // Get the debug telemetry, minus the rotating variables
     let result = query(&service, MAI_DEBUG, Some(Duration::from_secs(2)))?;
 
@@ -252,14 +252,14 @@ pub fn get_telem() -> Result<(), Error> {
     println!("MAI-400 Debug Telemetry:\n{:#?}", debug);
 
     let mut telem_vec: Vec<(String, String)> = vec![];
-    
+
     // Auto-convert returned JSON into a flat key-value vector
     if let Some(data) = debug {
         process_json(&mut telem_vec, data, "".to_owned());
         // Send it to the telemetry database
         send_telem("MAI400", telem_vec);
     }
-    
+
     // Get the rotating variables telemetry
     let result = query(&service, MAI_ROTATING, Some(Duration::from_secs(2)))?;
 
@@ -267,13 +267,13 @@ pub fn get_telem() -> Result<(), Error> {
     println!("MAI-400 Rotating Telemetry:\n{:#?}", rotating);
 
     let mut telem_vec: Vec<(String, String)> = vec![];
-    
+
     // Auto-convert returned JSON into a flat key-value vector
     if let Some(data) = rotating {
         process_json(&mut telem_vec, data, "".to_owned());
         // Send it to the telemetry database
         send_telem("MAI400", telem_vec);
     }
-    
+
     Ok(())
 }

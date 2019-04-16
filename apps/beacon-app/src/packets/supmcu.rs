@@ -16,25 +16,19 @@
 
 // Gather SupMCU module uptimes and reset flags every hour
 //
-// Message layout (18 bytes):
-//  0: AIM2 uptime
-//  1: AIM2 reset flags MSB
-//  2: AIM2 reset flags LSB
-//  3: BIM uptime
-//  4: BIM reset flags MSB
-//  5: BIM reset flags LSB
-//  6: PIM uptime
-//  7: PIM reset flags MSB
-//  8: PIM reset flags LSB
-//  9: SIM uptime
-// 10: SIM reset flags MSB
-// 11: SIM reset flags LSB
-// 12: RHM uptime
-// 13: RHM reset flags MSB
-// 14: RHM reset flags LSB
-// 15: BM2 uptime
-// 16: BM2 reset flags MSB
-// 17: BM2 reset flags LSB
+// Message layout (18 bytes. All multi-byte fields are Little Endian):
+//     0: AIM2 uptime
+//   1-2: AIM2 reset flags
+//     3: BIM uptime
+//   4-5: BIM reset flags
+//     6: PIM uptime
+//   7-8: PIM reset flags
+//     9: SIM uptime
+// 10-11: SIM reset flags
+//    12: RHM uptime
+// 13-14: RHM reset flags
+//    15: BM2 uptime
+// 16-17: BM2 reset flags
 
 // Reset Flags (Documentation provided by Pumpkin):
 //     - 0 = Power on Reset (The board was just applied power or cycled power).
@@ -54,6 +48,7 @@
 //     - 15 = TRAPR (Trap Conflict/interrupt conflict) [should not happen]
 
 use crate::transmit::*;
+use byteorder::{LittleEndian, WriteBytesExt};
 use failure::format_err;
 use kubos_app::query;
 use log::*;
@@ -112,8 +107,7 @@ pub fn supmcu_packet(radios: Radios) {
                 0xFFFF
             };
 
-            msg.push(((reset & 0xFF00) >> 8) as u8);
-            msg.push((reset & 0x00FF) as u8);
+            let _ = msg.write_u16::<LittleEndian>(reset);
         }
 
         let _ = radios.transmit(MessageType::SupMCU, 0, &msg);

@@ -31,9 +31,10 @@ pub struct Radios {
 
 impl Radios {
     pub fn transmit(&self, msg_type: MessageType, subtype: u8, data: &[u8]) -> Result<(), Error> {
-        // TODO: Convert message type enum to value
-        // TODO: Combine message type and subtype into single header byte
-        let header: u8 = msg_type as u8;
+        // Combine message type and subtype into single header byte
+        // 7 6 5 4 3 | 2 1 0
+        //  Msg type | Sub type
+        let header: u8 = ((msg_type as u8) << 3) | subtype;
 
         if data.len() > 34 {
             bail!("Message too long");
@@ -54,13 +55,13 @@ impl Radios {
     }
 
     fn send_simplex(&self, packet: &[u8]) -> Result<(), Error> {
-        debug!("Sending packet over simplex: {:?}", packet);
+        //info!("Sending packet over simplex: {:#x?}", packet);
         Ok(())
         //self.simplex.send_beacon(packet)
     }
 
     fn send_duplex(&self, packet: &[u8]) -> Result<(), Error> {
-        debug!("Sending packet over duplex: {:?}", packet);
+        //info!("Sending packet over duplex: {:?}", packet);
         Ok(())
     }
 }

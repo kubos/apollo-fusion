@@ -45,6 +45,7 @@ impl AppHandler for MyApp {
         };
 
         // Spawn threads for each of the beacon messages
+        /*
         let obc_radios = radios.clone();
         let handle = thread::spawn(move || obc::obc_packet(obc_radios));
         info!("Spawning OBC beacon thread: {:?}", handle.thread().id());
@@ -52,12 +53,21 @@ impl AppHandler for MyApp {
 
         let temp_radios = radios.clone();
         let handle = thread::spawn(move || temperature::temp_packet(temp_radios));
-        info!("Spawning temperature beacon thread: {:?}", handle.thread().id());
+        info!(
+            "Spawning temperature beacon thread: {:?}",
+            handle.thread().id()
+        );
         handles.push(handle);
-        
-        let temp_radios = radios.clone();
-        let handle = thread::spawn(move || supmcu::supmcu_packet(temp_radios));
+
+        let supmcu_radios = radios.clone();
+        let handle = thread::spawn(move || supmcu::supmcu_packet(supmcu_radios));
         info!("Spawning supMCU beacon thread: {:?}", handle.thread().id());
+        handles.push(handle);
+        */
+
+        let gps_radios = radios.clone();
+        let handle = thread::spawn(move || gps::gps_packet(gps_radios));
+        info!("Spawning GPS beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
 
         // TODO: Stay in a loop forever so the threads keep going
@@ -67,7 +77,7 @@ impl AppHandler for MyApp {
                 error!("Child thread {:?} panicked: {:?}", id, error);
             }
         }
-        
+
         Ok(())
     }
 }
