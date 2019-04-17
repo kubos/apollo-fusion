@@ -234,7 +234,6 @@ pub fn get_telem() -> Result<(), Error> {
     }
 
     let nominal = &result["telemetry"]["nominal"].as_object();
-    println!("MAI-400 Nominal Telemetry:\n{:#?}", nominal);
 
     let mut telem_vec: Vec<(String, String)> = vec![];
 
@@ -249,7 +248,6 @@ pub fn get_telem() -> Result<(), Error> {
     let result = query(&service, MAI_DEBUG, Some(Duration::from_secs(2)))?;
 
     let debug = &result["telemetry"]["debug"].as_object();
-    println!("MAI-400 Debug Telemetry:\n{:#?}", debug);
 
     let mut telem_vec: Vec<(String, String)> = vec![];
 
@@ -264,7 +262,6 @@ pub fn get_telem() -> Result<(), Error> {
     let result = query(&service, MAI_ROTATING, Some(Duration::from_secs(2)))?;
 
     let rotating = &result["telemetry"]["debug"]["rotating"].as_object();
-    println!("MAI-400 Rotating Telemetry:\n{:#?}", rotating);
 
     let mut telem_vec: Vec<(String, String)> = vec![];
 

@@ -55,7 +55,7 @@ impl Radios {
     }
 
     fn send_simplex(&self, packet: &[u8]) -> Result<(), Error> {
-        //info!("Sending packet over simplex: {:#x?}", packet);
+        info!("Sending packet over simplex: {:#x?}", packet);
         Ok(())
         //self.simplex.send_beacon(packet)
     }

@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+// Gather RAM and storage space information every hour
+//
 // Message layout:
 // 0: % RAM available
 // 1: % user data partition in use (/home)

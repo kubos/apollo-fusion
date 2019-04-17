@@ -380,7 +380,7 @@ fn convert_system_status(raw: &str) -> u32 {
 }
 
 fn convert_solution_status(raw: &str) -> u8 {
-    match raw {
+    match raw.trim_matches('\"') {
         "SOL_COMPUTED" => 0,
         "INSUFFICIENT_OBSERVATIONS" => 1,
         "NO_CONVERGENCE" => 2,
@@ -400,7 +400,7 @@ fn convert_solution_status(raw: &str) -> u8 {
 }
 
 fn convert_posvel_type(raw: &str) -> u16 {
-    match raw {
+    match raw.trim_matches('\"') {
         "NONE" => 0,
         "FIXED_POS" => 1,
         "FIXED_HEIGHT" => 2,
