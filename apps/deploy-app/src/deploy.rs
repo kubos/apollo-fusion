@@ -24,27 +24,47 @@ use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 // Default deploy delay: 45 minutes
-const DELAY_DEFAULT: Duration = Duration::from_secs(2700);
+const DELAY_DEFAULT: Duration = Duration::from_secs(45 * 60);
 static FW_SETENV_PATH: &'static str = "/usr/sbin/fw_setenv";
 
 // Deployment statuses
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum DeployStatus {
+    RemoveBeforeFlight,
     Ready,
     AlreadyDeployed,
 }
 
-pub fn deploy() -> Result<(), Error> {
-    // Check if we've already deployed.
-    // If not, wait the remaining holdtime
-    let status = check_deploy()?;
+pub fn deploy() {
+    // Deploy the solar panels
+    let _ = try_deploy(false);
 
-    let mcu_service = ServiceConfig::new("pumpkin-mcu-service");
+    // Start the radios
+    start_radios();
+}
 
+pub fn try_deploy(force: bool) -> Result<(), Error> {
+    let status = if force {
+        // When deployment is requested from the ground, we want it to be completed immediately,
+        // ignoring the hold time and any previous deployments
+        DeployStatus::Ready
+    } else {
+        // Check if we've already deployed.
+        // If not, wait the remaining hold time
+        check_deploy()
+    };
+
+    println!("Status: {:?}", status);
+
+    if status == DeployStatus::RemoveBeforeFlight {
+        warn!("RBF active. Deployment disabled");
+        bail!("RBF active. Deployment disabled");
+    }
+
+    let mut success = true;
     if status == DeployStatus::Ready {
+        let mcu_service = ServiceConfig::new("pumpkin-mcu-service");
         // Deploy the panels (BIM)
-        // TODO: What happens if deployment fails?
-        let mut success = true;
         if let Err(error) = query(&mcu_service, DEPLOY_ENABLE, Some(QUERY_TIMEOUT)) {
             error!("Failed to enable deploy pin: {:?}", error);
             success = false;
@@ -60,30 +80,19 @@ pub fn deploy() -> Result<(), Error> {
             success = false;
         };
 
-        /*
-        // TODO: Verify deployment
-
-        // Max firing time is 30 seconds
-        // Ideally, deployment will be instantaneous
-        thread::sleep(Duration::from_secs(30));
-
-        "We'll need to characterize the power input into the EPS with and without the solar panels
-        deployed, but generally if the craft is getting more power than before the firing sequence
-        has happened, then the panels are deployed.
-
-        Another way to check to see if the TiNi mechanism as successfully deployed is to check the
-        current draw on the 5V bus.
-        If the current draw has increased by ~2A while the fire command is active, then the TiNi
-        hasn't released mechanically yet. The TiNi deployer goes open circuit when it has
-        mechanically released the latch holding the panels and won't pull any current even if the
-        fire command is active.
-        */
-
-        // Mark the system as deployed
-        if success {
-            let _result = set_boot_var("deployed", "true");
-        }
+        // Note: The `deployed` envar will be updated later after we receive verification from
+        // the ground
     }
+
+    if success {
+        Ok(())
+    } else {
+        bail!("Deployment may have failed")
+    }
+}
+
+fn start_radios() {
+    let mcu_service = ServiceConfig::new("pumpkin-mcu-service");
 
     // Turn on radios:
     // Duplex radio
@@ -122,28 +131,40 @@ pub fn deploy() -> Result<(), Error> {
             error!("Failed to start beacon app: {:?}", err);
         }
     }
-
-    Ok(())
 }
 
-fn check_deploy() -> Result<DeployStatus, Error> {
+fn check_deploy() -> DeployStatus {
     // See if we've already deployed
     let deployed = UBootVars::new().get_bool("deployed").unwrap_or_else(|| {
-        error!("Failed to fetch deployment status");
+        // This variable isn't set by default, so it's okay if this called failed
+        // Assume we haven't deployed yet
         false
     });
 
     if deployed {
-        return Ok(DeployStatus::AlreadyDeployed);
+        return DeployStatus::AlreadyDeployed;
+    }
+
+    // See if we're allowed to deploy
+    let rbf = UBootVars::new()
+        .get_bool("remove_before_flight")
+        .unwrap_or_else(|| {
+            error!("Failed to fetch RBF status");
+            // If we can't check the status, play it safe and don't attempt deployment
+            true
+        });
+
+    if rbf {
+        return DeployStatus::RemoveBeforeFlight;
     }
 
     // Check if we need to wait before deploying
     if let Some(delay) = get_deploy_delay() {
-        info!("Starting deployment delay: {:?}", delay);
+        debug!("Starting deployment delay: {:?}", delay);
         thread::sleep(delay);
     }
 
-    Ok(DeployStatus::Ready)
+    DeployStatus::Ready
 }
 
 fn get_deploy_delay() -> Option<Duration> {
@@ -162,8 +183,14 @@ fn get_deploy_delay() -> Option<Duration> {
 
     // Get current system time
     let now = SystemTime::now();
-    info!("Current system time: {:?}", now);
-    let now = now.duration_since(UNIX_EPOCH).unwrap();
+    debug!("Current system time: {:?}", now);
+    let now = match now.duration_since(UNIX_EPOCH) {
+        Ok(val) => val,
+        Err(err) => {
+            error!("Failed to get current system time: {:?}", err);
+            return None;
+        }
+    };
 
     match started {
         // We've started deployment before, so we don't need to do the full deployment delay.
@@ -173,12 +200,14 @@ fn get_deploy_delay() -> Option<Duration> {
             let seconds: u64 = start_str[0].parse().unwrap_or(0);
             let nanos: u32 = start_str[1].parse().unwrap_or(0);
 
-            let start_time = if seconds == 0 && nanos == 0 {
+            if seconds == 0 && nanos == 0 {
+                // If for some reason we can't parse the previous start time, skip the hold time
+                // and just go straight to deployment
                 error!("Failed to parse deployment start time");
-                now
-            } else {
-                Duration::new(seconds, nanos)
-            };
+                return None;
+            }
+
+            let start_time = Duration::new(seconds, nanos);
 
             match now.checked_sub(start_time) {
                 Some(elapsed) => delay.checked_sub(elapsed),
@@ -188,17 +217,25 @@ fn get_deploy_delay() -> Option<Duration> {
         // If it doesn't exist, this is the first time we've started deployment.
         // save the currSysTime into the new uboot envar
         None => {
-            let _result = set_boot_var(
+            if set_boot_var(
                 "deploy_start",
                 &format!("{}.{}", now.as_secs(), now.subsec_nanos()),
-            );
-
-            Some(delay)
+            )
+            .is_ok()
+            {
+                // Use the full deployment delay
+                Some(delay)
+            } else {
+                // If we failed to set the start time, we should assume that we've failed to set it
+                // before and this isn't actually the first time we've been here.
+                // In this case, we should skip the hold time and go straight to deployment
+                None
+            }
         }
     }
 }
 
-fn set_boot_var(name: &str, value: &str) -> Result<(), Error> {
+pub fn set_boot_var(name: &str, value: &str) -> Result<(), Error> {
     let result = Command::new(FW_SETENV_PATH).args(&[name, value]).output()?;
 
     if !result.status.success() {

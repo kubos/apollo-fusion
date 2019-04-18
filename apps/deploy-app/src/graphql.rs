@@ -16,8 +16,6 @@
 
 // GraphQL requests
 
-// TODO: Is anything actually checking the `errors` field in the repsonses?
-
 use std::time::Duration;
 
 pub const QUERY_TIMEOUT: Duration = Duration::from_millis(500);
