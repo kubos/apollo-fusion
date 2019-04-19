@@ -45,40 +45,39 @@ impl AppHandler for MyApp {
         };
 
         // Spawn threads for each of the beacon messages
-        /*
+        
         let obc_radios = radios.clone();
         let handle = thread::spawn(move || obc::obc_packet(obc_radios));
         info!("Spawning OBC beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
 
-        let temp_radios = radios.clone();
-        let handle = thread::spawn(move || temperature::temp_packet(temp_radios));
-        info!(
-            "Spawning temperature beacon thread: {:?}",
-            handle.thread().id()
-        );
-        handles.push(handle);
-
-        let supmcu_radios = radios.clone();
-        let handle = thread::spawn(move || supmcu::supmcu_packet(supmcu_radios));
-        info!("Spawning supMCU beacon thread: {:?}", handle.thread().id());
-        handles.push(handle);
-
-        let gps_radios = radios.clone();
-        let handle = thread::spawn(move || gps::gps_packet(gps_radios));
-        info!("Spawning GPS beacon thread: {:?}", handle.thread().id());
-        handles.push(handle);
-
-        let adcs_radios = radios.clone();
-        let handle = thread::spawn(move || adcs::adcs_packet(adcs_radios));
-        info!("Spawning ADCS beacon thread: {:?}", handle.thread().id());
-        handles.push(handle);
-        */
-
-        let power_radios = radios.clone();
-        let handle = thread::spawn(move || power::power_packet(power_radios));
-        info!("Spawning power beacon thread: {:?}", handle.thread().id());
-        handles.push(handle);
+//        let temp_radios = radios.clone();
+//        let handle = thread::spawn(move || temperature::temp_packet(temp_radios));
+//        info!(
+//            "Spawning temperature beacon thread: {:?}",
+//            handle.thread().id()
+//        );
+//        handles.push(handle);
+//
+//        let supmcu_radios = radios.clone();
+//        let handle = thread::spawn(move || supmcu::supmcu_packet(supmcu_radios));
+//        info!("Spawning supMCU beacon thread: {:?}", handle.thread().id());
+//        handles.push(handle);
+//
+//        let gps_radios = radios.clone();
+//        let handle = thread::spawn(move || gps::gps_packet(gps_radios));
+//        info!("Spawning GPS beacon thread: {:?}", handle.thread().id());
+//        handles.push(handle);
+//
+//        let adcs_radios = radios.clone();
+//        let handle = thread::spawn(move || adcs::adcs_packet(adcs_radios));
+//        info!("Spawning ADCS beacon thread: {:?}", handle.thread().id());
+//        handles.push(handle);
+//    
+//        let power_radios = radios.clone();
+//        let handle = thread::spawn(move || power::power_packet(power_radios));
+//        info!("Spawning power beacon thread: {:?}", handle.thread().id());
+//        handles.push(handle);
 
         // Wait indefinitely for all the threads to exit (which they shouldn't do unless something
         // goes wrong)

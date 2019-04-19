@@ -19,10 +19,12 @@
 // Message layout:
 // 0: % RAM available
 // 1: % user data partition in use (/home)
-// 2-33: free
+// 2: Deployment status (0 = not deployed, 1 = deployed)
+// 3-33: free
 
 use crate::transmit::*;
 use kubos_app::query;
+use kubos_system::UBootVars;
 use log::*;
 use std::io::Read;
 use std::process::{Command, Stdio};
@@ -121,9 +123,15 @@ pub fn obc_packet(radios: Radios) {
             error!("Failed to get current disk usage info");
             100
         };
+        
+        let deployed = UBootVars::new().get_bool("deployed").unwrap_or(false);
 
         // Turn into data packet
-        let msg: [u8; 2] = [ram_percent as u8, disk_percent];
+        let msg: [u8; 3] = [
+            ram_percent as u8,
+            disk_percent,
+            deployed as u8
+        ];
 
         let _ = radios.transmit(MessageType::OBC, 0, &msg);
 
