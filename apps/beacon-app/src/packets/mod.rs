@@ -24,7 +24,7 @@ pub mod supmcu;
 pub mod temperature;
 
 use crate::transmit::*;
-use kubos_app::{query, ServiceConfig};
+use kubos_app::query;
 use std::time::Duration;
 
 fn get_string(radios: &Radios, msg: &str) -> String {

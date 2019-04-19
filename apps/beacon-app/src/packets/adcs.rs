@@ -52,9 +52,6 @@
 use super::get_string;
 use crate::transmit::*;
 use byteorder::{LittleEndian, WriteBytesExt};
-use failure::format_err;
-use kubos_app::{query, ServiceConfig};
-use log::*;
 use std::thread;
 use std::time::Duration;
 

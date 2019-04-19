@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 byteorder = "1.2"
+chrono = "0.4"
 failure = "0.1.2"
 kubos-app = { git = "https://github.com/kubos/kubos" }
 kubos-system = { git = "https://github.com/kubos/kubos" }

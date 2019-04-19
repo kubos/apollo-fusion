@@ -26,8 +26,7 @@ use crate::transmit::*;
 use kubos_app::query;
 use kubos_system::UBootVars;
 use log::*;
-use std::io::Read;
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::thread;
 use std::time::Duration;
 
@@ -39,7 +38,7 @@ const STORAGE_QUERY: &str = r#"{
 }"#;
 
 // Taken from /proc/meminfo on a BBB
-const MEM_TOTAL: f32 = 515340.0;
+const MEM_TOTAL: f32 = 515_340.0;
 
 pub fn obc_packet(radios: Radios) {
     let mut last_timestamp: String = "".to_string();
@@ -67,9 +66,7 @@ pub fn obc_packet(radios: Radios) {
 
                 // Convert to percentage, since that's a smaller number and basically what we care
                 // about anyways
-                let percent = (mem / MEM_TOTAL) * 100.0;
-
-                percent
+                (mem / MEM_TOTAL) * 100.0
             }
             Err(error) => {
                 error!("Unable to get last known memory usage: {:?}", error);
@@ -87,16 +84,14 @@ pub fn obc_packet(radios: Radios) {
         let disk_percent = if let Ok(output1) = Command::new("df").arg("/dev/mmcblk1p4").output() {
             let stdout = if output1.stderr.is_empty() {
                 output1.stdout
-            } else {
-                if let Ok(output0) = Command::new("df").arg("/dev/mmcblk0p4").output() {
-                    if output0.stderr.is_empty() {
-                        output0.stdout
-                    } else {
-                        vec![]
-                    }
+            } else if let Ok(output0) = Command::new("df").arg("/dev/mmcblk0p4").output() {
+                if output0.stderr.is_empty() {
+                    output0.stdout
                 } else {
                     vec![]
                 }
+            } else {
+                vec![]
             };
 
             let mut slices = stdout.rsplit(|&elem| elem == b' ');
@@ -123,15 +118,11 @@ pub fn obc_packet(radios: Radios) {
             error!("Failed to get current disk usage info");
             100
         };
-        
+
         let deployed = UBootVars::new().get_bool("deployed").unwrap_or(false);
 
         // Turn into data packet
-        let msg: [u8; 3] = [
-            ram_percent as u8,
-            disk_percent,
-            deployed as u8
-        ];
+        let msg: [u8; 3] = [ram_percent as u8, disk_percent, deployed as u8];
 
         let _ = radios.transmit(MessageType::OBC, 0, &msg);
 

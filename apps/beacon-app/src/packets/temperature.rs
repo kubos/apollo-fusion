@@ -48,9 +48,7 @@
 
 use super::get_string;
 use crate::transmit::*;
-use failure::format_err;
 use kubos_app::{query, ServiceConfig};
-use log::*;
 use std::thread;
 use std::time::Duration;
 
@@ -223,7 +221,7 @@ pub fn temp_packet(radios: Radios) {
         // Temperature *C = gs_rwsMotorTemp * 0.0402930 - 50
         let mai_motor_temp: u8 = if let Ok(raw) = get_string(&radios, MAI_MOTOR_TEMP).parse::<i16>()
         {
-            ((f32::from(raw) * 0.0402930 - 50.0) as i8) as u8
+            ((f32::from(raw) * 0.040_293_0 - 50.0) as i8) as u8
         } else {
             0
         };

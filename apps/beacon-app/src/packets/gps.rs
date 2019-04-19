@@ -32,15 +32,17 @@
 // 11-18: (double) Velocity on y-axis
 // 18-26: (double) Velocity on z-axis
 //
-// Packet 3 (Everything else. 18 bytes)
+// Packet 3 (Everything else. 24 bytes)
 //     0: Time status (how well the time is known. See `convert_time_status`)
-//   1-2: Whole weeks since GPS epoch (Jan 6th, 1980)
-//   3-7: Milliseconds elapsed in current week
+//   1-2: Last known GPS time - Whole weeks since GPS epoch (Jan 6th, 1980)
+//   3-7: Last known GPS time - Milliseconds elapsed in current week
 //  8-11: System status flags  (see `convert_system_status`)
 // 12-13: GPS status from AIM2
 //    14: Power status from AIM2
 // 15-16: Power draw over the 3.3V USB connection (normal value is ~0.9 Watts)
 //    17: Power status from OEM7 service (0 = off, 1 = on)
+// 18-19: Time from last successful lock - Whole weeks since GPS epoch (Jan 6th, 1980)
+// 20-23: Time from last successful lock - Milliseconds elapsed in current week
 
 // GPS status flags from AIM2 (Note: The returned value is 2 bytes, but there's only one useful
 // byte of data):
@@ -58,9 +60,7 @@
 use super::get_string;
 use crate::transmit::*;
 use byteorder::{LittleEndian, WriteBytesExt};
-use failure::format_err;
 use kubos_app::{query, ServiceConfig};
-use log::*;
 use std::thread;
 use std::time::Duration;
 
@@ -211,9 +211,9 @@ fn send_position_packet(radios: &Radios) {
 
 fn send_velocity_packet(radios: &Radios) {
     let velocity_status: u8 =
-        convert_solution_status(&get_string(&radios, LOCKSTATUS_POS_STATUS).trim_matches('\"'));
+        convert_solution_status(&get_string(&radios, LOCKSTATUS_VEL_STATUS).trim_matches('\"'));
     let velocity_type: u16 =
-        convert_posvel_type(&get_string(&radios, LOCKSTATUS_POS_TYPE).trim_matches('\"'));
+        convert_posvel_type(&get_string(&radios, LOCKSTATUS_VEL_TYPE).trim_matches('\"'));
 
     let velocity_x: f64 = get_string(&radios, LOCKINFO_VEL_X).parse().unwrap_or(0.0);
     let velocity_y: f64 = get_string(&radios, LOCKINFO_VEL_Y).parse().unwrap_or(0.0);
@@ -235,9 +235,7 @@ fn send_misc_packet(radios: &Radios) {
     let time_week: u16 = get_string(&radios, LOCKSTATUS_TIME_WEEK)
         .parse()
         .unwrap_or(0);
-    let time_ms: u32 = get_string(&radios, LOCKSTATUS_TIME_WEEK)
-        .parse()
-        .unwrap_or(0);
+    let time_ms: u32 = get_string(&radios, LOCKSTATUS_TIME_MS).parse().unwrap_or(0);
 
     let system_status: u32 = get_system_status(&radios);
 
@@ -262,6 +260,9 @@ fn send_misc_packet(radios: &Radios) {
         Err(_) => 255,
     };
 
+    let lock_time_week: u16 = get_string(&radios, LOCKINFO_TIME_WEEK).parse().unwrap_or(0);
+    let lock_time_ms: u32 = get_string(&radios, LOCKINFO_TIME_MS).parse().unwrap_or(0);
+
     let mut msg = vec![];
     msg.push(time_status);
     let _ = msg.write_u16::<LittleEndian>(time_week);
@@ -271,6 +272,8 @@ fn send_misc_packet(radios: &Radios) {
     msg.push(power_status);
     let _ = msg.write_f32::<LittleEndian>(power_3v_usb);
     msg.push(power);
+    let _ = msg.write_u16::<LittleEndian>(lock_time_week);
+    let _ = msg.write_u32::<LittleEndian>(lock_time_ms);
 
     let _ = radios.transmit(MessageType::GPS, 3, &msg);
 }

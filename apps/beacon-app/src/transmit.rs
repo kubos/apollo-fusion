@@ -20,7 +20,6 @@ use failure::{bail, Error};
 use kubos_app::ServiceConfig;
 use log::*;
 use nsl_simplex_s3::SimplexS3;
-use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Radios {
@@ -60,7 +59,7 @@ impl Radios {
         //self.simplex.send_beacon(packet)
     }
 
-    fn send_duplex(&self, packet: &[u8]) -> Result<(), Error> {
+    fn send_duplex(&self, _packet: &[u8]) -> Result<(), Error> {
         //info!("Sending packet over duplex: {:?}", packet);
         Ok(())
     }
