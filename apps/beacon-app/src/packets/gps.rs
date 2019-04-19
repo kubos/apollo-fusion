@@ -55,6 +55,7 @@
 //      - 0x04 - Over-current/thermal fault on Vcc supply (should always be zero for us)
 //      - 0x08 - Over-current/thermal fault on 3.3V USB supply
 
+use super::get_string;
 use crate::transmit::*;
 use byteorder::{LittleEndian, WriteBytesExt};
 use failure::format_err;
@@ -272,16 +273,6 @@ fn send_misc_packet(radios: &Radios) {
     msg.push(power);
 
     let _ = radios.transmit(MessageType::GPS, 3, &msg);
-}
-
-fn get_string(radios: &Radios, msg: &str) -> String {
-    match query(&radios.telem_service, msg, Some(Duration::from_millis(100))) {
-        Ok(data) => {
-            let value = data["telemetry"][0]["value"].as_str().unwrap_or("");
-            value.to_owned()
-        }
-        Err(_) => "".to_owned(),
-    }
 }
 
 fn get_system_status(radios: &Radios) -> u32 {

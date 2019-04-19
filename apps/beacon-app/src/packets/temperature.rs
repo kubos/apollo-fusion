@@ -46,6 +46,7 @@
 // 10: JT3  < Temp < JT4  (high, but okay temperature)
 // 20: JT4  < Temp (above maximum operating temperature)
 
+use super::get_string;
 use crate::transmit::*;
 use failure::format_err;
 use kubos_app::{query, ServiceConfig};
@@ -303,15 +304,5 @@ pub fn temp_packet(radios: Radios) {
 
         // Run every 15 minutes
         thread::sleep(Duration::from_secs(15 * 60));
-    }
-}
-
-fn get_string(radios: &Radios, msg: &str) -> String {
-    match query(&radios.telem_service, msg, Some(Duration::from_millis(100))) {
-        Ok(data) => {
-            let value = data["telemetry"][0]["value"].as_str().unwrap_or("");
-            value.to_owned()
-        }
-        Err(_) => "".to_owned(),
     }
 }

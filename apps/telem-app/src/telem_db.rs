@@ -49,7 +49,7 @@ pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
         socket
             .send_to(&ser::to_vec(&message).unwrap(), &remote_addr)
             .unwrap();
-            
+
         // Give the telemetry service just a little bit of breathing room
         thread::sleep(Duration::from_millis(1));
     }

@@ -49,6 +49,7 @@
 // 1 - Set Qbi
 // 2 - EHS/magnetometer
 
+use super::get_string;
 use crate::transmit::*;
 use byteorder::{LittleEndian, WriteBytesExt};
 use failure::format_err;
@@ -256,17 +257,6 @@ pub fn adcs_packet(radios: Radios) {
 
         // Run every hour
         thread::sleep(Duration::from_secs(3600));
-    }
-}
-
-fn get_string(radios: &Radios, msg: &str) -> String {
-    match query(&radios.telem_service, msg, Some(Duration::from_millis(100))) {
-        Ok(data) => {
-            let value = data["telemetry"][0]["value"].as_str().unwrap_or("");
-            println!("Received: {}", value);
-            value.to_owned()
-        }
-        Err(_) => "".to_owned(),
     }
 }
 

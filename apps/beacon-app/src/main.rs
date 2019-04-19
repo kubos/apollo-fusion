@@ -68,11 +68,16 @@ impl AppHandler for MyApp {
         let handle = thread::spawn(move || gps::gps_packet(gps_radios));
         info!("Spawning GPS beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
-        */
 
         let adcs_radios = radios.clone();
         let handle = thread::spawn(move || adcs::adcs_packet(adcs_radios));
         info!("Spawning ADCS beacon thread: {:?}", handle.thread().id());
+        handles.push(handle);
+        */
+
+        let power_radios = radios.clone();
+        let handle = thread::spawn(move || power::power_packet(power_radios));
+        info!("Spawning power beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
 
         // Wait indefinitely for all the threads to exit (which they shouldn't do unless something
