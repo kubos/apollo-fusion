@@ -16,6 +16,7 @@ RATE_THRESHOLD_TIMEOUT = 10 # Seconds
 ADCS_SETUP_TIMEOUT = 24*60*60 # 24 hours
 HS_LOOP_TIME = 1*60 # 5 minutes
 NOOP_RETRY = 3
+REBOOT_COUNT = 0
 
 def on_boot(logger):
 
@@ -28,6 +29,7 @@ def on_boot(logger):
     previous_timestamp = 0
     while True:
         # try:
+
         # Check timestamp
         logger.debug("Checking for timestamp change")
         previous_timestamp = check_timestamp(logger=logger,previous_timestamp=previous_timestamp)
@@ -50,7 +52,10 @@ def on_boot(logger):
         #     logger.error("Something went wrong: " + str(e) + "\r\n")
 
         if (start_time + ADCS_SETUP_TIMEOUT) < time.time():
-            logger.info("launch ADCS setup: " + startApp)
+            """
+            Launch ADCS setup every 24 hours
+            """
+            trigger_adcs_setup(logger=logger)
 
         time.sleep(HS_LOOP_TIME)
 
@@ -78,23 +83,18 @@ def check_timestamp(logger, previous_timestamp):
         previous_timestamp = timestamp
     else:
         logger.warning("ADCS tlm not updating, sending no-op")
+        previous_timestamp = 0
         success = noop_cmd(logger)
         if success == False:
             reboot_mai(logger,reason="ADCS not responding to NOOP CMD")
 
     return previous_timestamp
 
-def check_reboot(logger):
-    """
-    Check for reboot
-        If it has: restart the ADCS setup logic from the deployment sequence
-    """
-    rebooted = True
-    if rebooted:
-        logger.warning("MAI rebooted, rerunning setup")
-        trigger_adcs_setup(logger=logger)
-
 def check_speed(logger):
+    """
+    Any of the 3 wheel speeds > WHEEL_SPEED_THRESHOLD
+    for WHEEL_SPEED_THRESHOLD_TIMEOUT seconds
+    """
     wheel_speed_x = "rwsSpeedTach_0"
     x_speed = query_tlmdb(logger=logger,tlm_key=wheel_speed_x)['value']
     wheel_speed_y = "rwsSpeedTach_1"
@@ -113,6 +113,10 @@ def check_speed(logger):
         speed = query_mai(logger=logger,tlm_key=mai_wheel_speed_key)
 
 def check_angle(logger):
+    """
+    Angle to Go > ANGLE_TO_GO_THRESHOLD degrees
+    for ANGLE_TO_GO_THRESHOLD_TIMEOUT seconds
+    """
     angle_to_go_key = "angleToGo"
     angle = query_tlmdb(logger=logger,tlm_key=angle_to_go_key)['value']
 
@@ -125,6 +129,10 @@ def check_angle(logger):
         angle = query_mai(logger=logger,tlm_key=angle_to_go_key)
 
 def check_spin(logger):
+    """
+    RMS of Body Rate > RATE_THRESHOLD deg/s
+    for RATE_THRESHOLD_TIMEOUT seconds
+    """
     logger.debug("Checking Body Rate")
     x_key = "omegaB_0"
     y_key = "omegaB_1"
@@ -148,25 +156,25 @@ def check_spin(logger):
 
 def noop_cmd(logger):
     logger.info("Sending NOOP cmd")
-    try:
-        for i in range(NOOP_RETRY):
-            mutation = """mutation {
-                noop {
-                    errors: String,
-                    success: Boolean
-               }
-            }"""
+    for i in range(NOOP_RETRY):
+        mutation = """mutation {
+            noop {
+                errors: String,
+                success: Boolean
+           }
+        }"""
+        try:
             result = SERVICES.query(service="mai400-service",query=mutation)
             if result['noop']['success']:
                 return True
-    except Exception:
-        logger.error("MAI service not responding")
-        return False
+        except Exception:
+            logger.warning("MAI did not respond, retrying.")
 
     return False
 
 def reboot_mai(logger,reason):
-    logger.error(reason)
+    REBOOT_COUNT += 1
+    logger.error(f"Rebooting MAI400. Reboot Count: {REBOOT_COUNT} Reason: {reason} ")
     ## TODO: actually reset the mai ##
 
 def query_tlmdb(logger,tlm_key,subsystem = "MAI400"):
@@ -182,9 +190,9 @@ def query_tlmdb(logger,tlm_key,subsystem = "MAI400"):
     logger.debug(result)
 
     # telemetry db returns strings
-    result['telemety']['value'] = float(result['telemety']['value'])
+    result['telemetry'][0]['value'] = float(result['telemetry'][0]['value'])
 
-    return result['telemetry']
+    return result['telemetry'][0]
 
 def query_mai(logger,tlm_key):
 
@@ -202,10 +210,6 @@ def query_mai(logger,tlm_key):
 
     return result['telemetry']['nominal'][tlm_key]
 
-def on_command(logger):
-    # Sets up ADCS
-    logger.info("ADCS Setup Triggered.")
-
 def rms(array):
     sum = 0
     for val in array:
@@ -214,41 +218,12 @@ def rms(array):
     rms_val = mean**0.5
     return rms_val
 
-# def logging_setup(app_name, level = logging.DEBUG):
-#
-#     import logging
-#     """Set up the logger for the program
-#     All log messages will be sent to rsyslog using the User facility.
-#     Additionally, they will also be echoed to ``stdout``
-#
-#     Args:
-#
-#         - app_name (:obj:`str`): The application name which should be used for all log messages
-#         - level (:obj:`logging.level`): The minimum logging level which should be recorded.
-#           Default: `logging.DEBUG`
-#
-#     Returns:
-#         An initialized Logger object
-#     """
-#     # Create a new logger
-#     logger = logging.getLogger(app_name)
-#     # We'll log everything of Debug level or higher
-#     logger.setLevel(level)
-#     # Set the log message template
-#     formatter = logging.Formatter(app_name + ' %(message)s')
-#
-#     # Set up a handler for logging to stdout
-#     stdout = logging.StreamHandler(stream=sys.stdout)
-#     stdout.setFormatter(formatter)
-#
-#     # Finally, add our handlers to our logger
-#     logger.addHandler(stdout)
-#
-#     return logger
+def on_command(logger):
+    # Sets up ADCS
+    logger.info("ADCS Setup Triggered.")
 
 def main():
 
-    ### UNCOMMENT THIS WHEN ACTUALLY RUNNING ###
     logger = app_api.logging_setup("adcs-hs")
     # logger = logging_setup("adcs-hs")
 
