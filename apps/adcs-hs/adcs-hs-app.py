@@ -7,6 +7,8 @@ import time
 import logging
 
 SERVICES = app_api.Services()
+
+## Housekeeping
 WHEEL_SPEED_THRESHOLD = 5000 # RPM
 WHEEL_SPEED_THRESHOLD_TIMEOUT = 20 # Seconds
 ANGLE_TO_GO_THRESHOLD = 2 # degrees
@@ -17,6 +19,14 @@ ADCS_SETUP_TIMEOUT = 24*60*60 # 24 hours
 HS_LOOP_TIME = 1*60 # 5 minutes
 NOOP_RETRY = 3
 REBOOT_COUNT = 0
+
+## Setup
+DETUMBLE_RATE_THRESHOLD = 0.5 # deg/s
+DETUMBLE_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops
+DETUMBLE_RATE_LOOP_TIME = 60 # Seconds
+POINTING_ANGLE_THRESHOLD = 1 # Degree
+POINTING_ANGLE_TIMEOUT = 5*60 # 5 Minutes
+
 
 def on_boot(logger):
 
@@ -112,7 +122,7 @@ def check_speed(logger):
             reboot_mai(logger=logger,reason="Wheel speed over {} for {} seconds. Speeds: {}".format(WHEEL_SPEED_THRESHOLD,WHEEL_SPEED_THRESHOLD_TIMEOUT,speed))
         speed = query_mai(logger=logger,tlm_key=mai_wheel_speed_key)
 
-def check_angle(logger):
+def check_angle(logger,reboot = True, threshold=ANGLE_TO_GO_THRESHOLD,timeout=ANGLE_TO_GO_THRESHOLD_TIMEOUT):
     """
     Angle to Go > ANGLE_TO_GO_THRESHOLD degrees
     for ANGLE_TO_GO_THRESHOLD_TIMEOUT seconds
@@ -125,10 +135,13 @@ def check_angle(logger):
         time.sleep(1)
         counter+=1
         if counter >= ANGLE_TO_GO_THRESHOLD_TIMEOUT:
-            reboot_mai(logger=logger,reason="Angle to Go over {} for {} seconds. Angle: {}".format(ANGLE_TO_GO_THRESHOLD,ANGLE_TO_GO_THRESHOLD_TIMEOUT,angle))
+            if reboot = True:
+                reboot_mai(logger=logger,reason="Angle to Go over {} for {} seconds. Angle: {}".format(ANGLE_TO_GO_THRESHOLD,ANGLE_TO_GO_THRESHOLD_TIMEOUT,angle))
+            return False
         angle = query_mai(logger=logger,tlm_key=angle_to_go_key)
+    return True
 
-def check_spin(logger):
+def check_spin(logger,reboot = True,threshold = RATE_THRESHOLD,timeout = RATE_THRESHOLD_TIMEOUT,loop_time = 1):
     """
     RMS of Body Rate > RATE_THRESHOLD deg/s
     for RATE_THRESHOLD_TIMEOUT seconds
@@ -145,14 +158,16 @@ def check_spin(logger):
     mai_rate_key = "omegaB"
 
     counter = 0
-    while rms_rate > RATE_THRESHOLD:
-        time.sleep(1)
+    while rms_rate > threshold:
+        time.sleep(loop_time)
         counter+=1
-        if counter >= RATE_THRESHOLD_TIMEOUT:
-            reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(RATE_THRESHOLD,RATE_THRESHOLD_TIMEOUT,rms))
+        if counter >= timeout:
+            if reboot = True:
+                reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(RATE_THRESHOLD,RATE_THRESHOLD_TIMEOUT,rms))
+            return False
         rate = query_mai(logger=logger,tlm_key=mai_rate_key)
-        # rms_rate = np.sqrt(np.mean(np.square(rate)))
         rms_rate = rms(rate)
+    return True
 
 def noop_cmd(logger):
     logger.info("Sending NOOP cmd")
@@ -175,7 +190,7 @@ def noop_cmd(logger):
 def reboot_mai(logger,reason):
     REBOOT_COUNT += 1
     logger.error(f"Rebooting MAI400. Reboot Count: {REBOOT_COUNT} Reason: {reason} ")
-    ## TODO: actually reset the mai ##
+    ## TODO: actually reboot the mai ##
 
 def query_tlmdb(logger,tlm_key,subsystem = "MAI400"):
 
@@ -211,6 +226,7 @@ def query_mai(logger,tlm_key):
     return result['telemetry']['nominal'][tlm_key]
 
 def rms(array):
+    # replacement for: np.sqrt(np.mean(np.square(array)))
     sum = 0
     for val in array:
         sum += val**2
@@ -220,8 +236,96 @@ def rms(array):
 
 def on_command(logger):
     # Sets up ADCS
-    logger.info("ADCS Setup Triggered.")
+    logger.info("ADCS Setup Started. Powering on ADCS and GPS")
+    power_on(logger=logger)
+    power_on_gps(logger=logger)
 
+    logger.info("Waiting for Detumble")
+    wait_for_detumble(logger=logger)
+
+    logger.info("Waiting for GPS lock")
+    update_gps_info(logger=logger)
+
+    logger.info("Going to Nadir pointing")
+    set_attitude_determination_mode(logger=logger,mode=SUNMAG)
+    set_attitude_control_mode(logger=logger,mode=NADIR)
+
+    logger.info("Waiting for Angle to converge")
+    wait_for_angle(logger=logger)
+    set_attitude_determination_mode(logger=logger,mode=EHS)
+
+    logger.info("ADCS Setup Complete")
+
+    """
+    On Board Setup (performed on every boot up):
+
+    Turn on MAI
+    Wait until detumbling is finished
+    Check Body Rate every 1 minute
+    If it’s < 0.5 deg/s, check every second for 30 seconds
+    12 hours has passed
+    (B dot can be used and can be verified with body rate, but body rate is less reliable for detumbling. Body rate should be roughly .1 degree)
+    Turn on GPS
+    Wait until GPS Lock is current (Position and velocity are finesteering, and time is less than 5 minutes old)
+    Check every 1 minute
+    If it waits over 1 hour:
+    abort setup
+    issue error
+    Go to Safe Mode (acquisition)
+    Feed BestXYZ GPS data directly into AODCS (Attitude and Orbit Determination and Control System)
+    Sets GPS Time
+    Sets RV
+    Set Attitude determination mode to Mode 0: Sun/Mag Mode (CSS or sun/mag)
+    Set ACS mode to Mode 3: Normal Mode (Nadir)
+    Wait to get to Nadir/Quaternion/desired orientation
+    Angle to Go is close to zero < 1 degree for 30 seconds
+    Check every second
+    Abort and go to acquisition mode if it doesn’t converge in 5 minutes
+    Set Att Det Mode to Mode 2: EHS/Mag. (EHS - ONLY FOR NADIR MODE)
+
+    """
+
+def power_on(logger):
+    logger.info("Powering on MAI400")
+    pass
+
+def power_on_gps(logger):
+    logger.info("Powering on GPS")
+    pass
+
+def wait_for_detumble(logger):
+    detumbled = check_spin(logger=logger,
+                           reboot=False,
+                           threshold=DETUMBLE_RATE_THRESHOLD,
+                           timeout=DETUMBLE_RATE_THRESHOLD_TIMEOUT,
+                           loop_time=DETUMBLE_RATE_LOOP_TIME)
+    if detumbled == False:
+        reboot_mai(logger=logger,reason="Did not detumble. Rebooting into acquisition mode.")
+        raise
+
+def update_gps_info(logger):
+    # Turn on GPS
+    # Wait until GPS Lock is current (Position and velocity are finesteering, and time is less than 5 minutes old)
+    # Check every 1 minute
+    # If it waits over 1 hour:
+    #   abort setup
+    #   issue error
+    #   Go to Safe Mode (acquisition)
+    # Feed BestXYZ GPS data directly into AODCS (Attitude and Orbit Determination and Control System)
+    # Sets GPS Time
+    # Sets RV
+
+    return "gps info updated!"
+
+def wait_for_angle(logger):
+    angle = check_angle(logger=logger,
+                        reboot=False,
+                        threshold=POINTING_ANGLE_THRESHOLD,
+                        timeout=POINTING_ANGLE_TIMEOUT)
+    if angle == False:
+        reboot_mai(logger=logger,reason="Angle did not converge. Rebooting into acquisition mode.")
+        raise
+        
 def main():
 
     logger = app_api.logging_setup("adcs-hs")
