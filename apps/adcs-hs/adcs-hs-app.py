@@ -26,14 +26,22 @@ DETUMBLE_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops
 DETUMBLE_RATE_LOOP_TIME = 60 # Seconds
 POINTING_ANGLE_THRESHOLD = 1 # Degree
 POINTING_ANGLE_TIMEOUT = 5*60 # 5 Minutes
+GPS_LOCK_TIMEOUT = 12*60 # Loops (1 hour)
+GPS_LOOP_TIME = 5 # Seconds
+GPS_RETRIES = 10 # Tries
 
 
 def on_boot(logger):
 
     logger.info("OnBoot logic")
 
+    # Make sure ADCS is on
+    power_on(logger=logger)
+
     # Launch ADCS Setup
     trigger_adcs_setup(logger=logger)
+
+    time.sleep(5) # Sleep to wait for MAI to come online
 
     start_time = time.time()
     previous_timestamp = 0
@@ -236,9 +244,8 @@ def rms(array):
 
 def on_command(logger):
     # Sets up ADCS
-    logger.info("ADCS Setup Started. Powering on ADCS and GPS")
-    power_on(logger=logger)
-    power_on_gps(logger=logger)
+    logger.info("ADCS Setup Started. Powering on GPS")
+    power_gps(logger=logger)
 
     logger.info("Waiting for Detumble")
     wait_for_detumble(logger=logger)
@@ -289,10 +296,6 @@ def power_on(logger):
     logger.info("Powering on MAI400")
     pass
 
-def power_on_gps(logger):
-    logger.info("Powering on GPS")
-    pass
-
 def wait_for_detumble(logger):
     detumbled = check_spin(logger=logger,
                            reboot=False,
@@ -304,18 +307,68 @@ def wait_for_detumble(logger):
         raise
 
 def update_gps_info(logger):
-    # Turn on GPS
-    # Wait until GPS Lock is current (Position and velocity are finesteering, and time is less than 5 minutes old)
-    # Check every 1 minute
-    # If it waits over 1 hour:
-    #   abort setup
-    #   issue error
-    #   Go to Safe Mode (acquisition)
-    # Feed BestXYZ GPS data directly into AODCS (Attitude and Orbit Determination and Control System)
-    # Sets GPS Time
-    # Sets RV
+    counter = 0
+    while True:
+        counter += 1
+        power_gps(logger=logger)
+        lock = wait_for_lock(logger=logger)
+        if lock != False:
+            success = submit_lock_data(logger=logger,lock=lock)
+            if success:
+                logger.info("GPS Time and Ephemeris successfully configured.")
+                power_gps(logger=logger,state='OFF')
+                return
+        logger.warning('Updating Lock was unsuccessful. Retrying.')
+        if counter > GPS_RETRIES:
+            power_gps(logger=logger,state='OFF')
+            raise
 
-    return "gps info updated!"
+
+def power_gps(logger,state='ON'):
+    logger.info(f'Power GPS: {state}')
+    pass
+
+def wait_for_lock(logger):
+    # Wait until GPS Lock is current (Position and velocity are finesteering, and time is less than 5 minutes old)
+    logger.info('Waiting for GPS Lock')
+    time_status = None
+    pos_status = None
+    vel_status = None
+    LOCKED = "FINESTEERING"
+    counter = 0
+    while counter >= GPS_LOCK_TIMEOUT:
+        if time_status is not LOCKED:
+            logger.debug(f'Waiting for time convergence: {time_status}')
+        if pos_status is not LOCKED:
+            logger.debug(f'Waiting for position convergence: {pos_status}')
+        if vel_status is not LOCKED:
+            logger.debug(f'Waiting for velocity convergence: {vel_status}')
+
+        if all(status = LOCKED for status in [time_status,pos_status,vel_status]):
+            logger.info("Lock Achieved!")
+            lock = True
+            return lock
+
+        counter += 1
+        time.sleep(GPS_LOOP_TIME)
+
+    logger.error(f"GPS Timed out waiting for lock")
+
+def submit_lock_data(logger,lock):
+    # Feed BestXYZ GPS data directly into AODCS (Attitude and Orbit Determination and Control System)
+    logger.debug("Setting System Time")
+    # Set Processor Time
+    logger.debug("Setting GPS Time on MAI")
+    # Set GPS Time
+    logger.debug("Setting Ephemeris on MAI")
+    # Set GpsObservation2
+    success = True
+    if success:
+        return True
+
+    return False
+
+
 
 def wait_for_angle(logger):
     angle = check_angle(logger=logger,
@@ -325,7 +378,7 @@ def wait_for_angle(logger):
     if angle == False:
         reboot_mai(logger=logger,reason="Angle did not converge. Rebooting into acquisition mode.")
         raise
-        
+
 def main():
 
     logger = app_api.logging_setup("adcs-hs")
