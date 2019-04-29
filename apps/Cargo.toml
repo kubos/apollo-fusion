@@ -1,6 +1,7 @@
 [workspace]
 members = [
 "beacon-app",
+"deploy-app",
 "telem-app"
 ]
 
