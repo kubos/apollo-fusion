@@ -22,7 +22,7 @@ use crate::transmit::*;
 use failure::Error;
 use kubos_app::*;
 use log::*;
-use nsl_simplex_s3::SimplexS3;
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 struct MyApp;
@@ -35,12 +35,13 @@ impl AppHandler for MyApp {
 
     fn on_command(&self, _args: Vec<String>) -> Result<(), Error> {
         let mut handles = vec![];
-        // TODO: Which UART for simplex?
-        let simplex = SimplexS3::new("/dev/ttyS2")?;
+        // We're using the RHM supMCU module's connection to the Simplex (over I2C),
+        // rather than a direct UART connection
+        let sup_mcu = ServiceConfig::new("pumpkin-mcu-service");
         let telem_service = ServiceConfig::new("telemetry-service");
         let radios = Radios {
             telem_service,
-            simplex,
+            simplex: Arc::new(Mutex::new(sup_mcu)),
         };
 
         // Spawn threads for each of the beacon messages

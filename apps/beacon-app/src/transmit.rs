@@ -17,14 +17,15 @@
 // Module for actually sending messages
 
 use failure::{bail, Error};
-use kubos_app::ServiceConfig;
+use kubos_app::{query, ServiceConfig};
 use log::*;
-use nsl_simplex_s3::SimplexS3;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 #[derive(Clone)]
 pub struct Radios {
     pub telem_service: ServiceConfig,
-    pub simplex: SimplexS3,
+    pub simplex: Arc<Mutex<ServiceConfig>>,
     // TODO: duplex: DuplexD2,
 }
 
@@ -53,10 +54,30 @@ impl Radios {
         Ok(())
     }
 
+    // Note: This send logic is configured to be sent via the RHM supMCU module.
+    // It's possible for the simplex to be connected directly to a UART.
+    // If that happens (ie if we want to re-use this code in the future), this logic will need to be
+    // updated to use a standard UART connection for communication.
     fn send_simplex(&self, packet: &[u8]) -> Result<(), Error> {
+        // We've got the service config in a mutex to ensure messages get sent one at a time
+        // If the mutex gets poisoned, we want to crash as noisily as possible
+        let simplex = self.simplex.lock().unwrap();
         info!("Sending packet over simplex: {:#02x?}", packet);
+        
+        let hex: String = packet.iter().map(|elem| format!("{:02x}", elem)).collect::<Vec<String>>().join("");
+        
+        let request = format!(r#"{{
+            mutation {{
+                passthrough(module: "rhm", command: "RMS:GS:SEND {}") {{
+                    status,
+                    command
+                }}
+            }}"#, hex);
+        
+        let result = query(&simplex, &request, Some(Duration::from_millis(100)))?;
+        println!("Result: {:?}", result);
+        // TODO: Verify the result
         Ok(())
-        //self.simplex.send_beacon(packet)
     }
 
     fn send_duplex(&self, _packet: &[u8]) -> Result<(), Error> {
