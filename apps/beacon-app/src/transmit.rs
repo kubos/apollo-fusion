@@ -20,6 +20,7 @@ use failure::{bail, Error};
 use kubos_app::{query, ServiceConfig};
 use log::*;
 use std::sync::{Arc, Mutex};
+use std::thread;
 use std::time::Duration;
 
 #[derive(Clone)]
@@ -28,6 +29,10 @@ pub struct Radios {
     pub simplex: Arc<Mutex<ServiceConfig>>,
     // TODO: duplex: DuplexD2,
 }
+
+pub const SIMPLEX_STATUS: &str = r#"{
+    mcuTelemetry(module: "rhm", fields: ["globalstar_status"])
+}"#;
 
 impl Radios {
     pub fn transmit(&self, msg_type: MessageType, subtype: u8, data: &[u8]) -> Result<(), Error> {
@@ -62,22 +67,85 @@ impl Radios {
         // We've got the service config in a mutex to ensure messages get sent one at a time
         // If the mutex gets poisoned, we want to crash as noisily as possible
         let simplex = self.simplex.lock().unwrap();
+
+        // TODO: probably make this a counter. Or bring down the whole app if something goes wrong
+        loop {
+            // Get the current status of the simplex
+            let status = self.check_simplex(&simplex)?;
+
+            if status == SimplexStatus::NoTransmissions
+                || status == SimplexStatus::LastGood
+                || status == SimplexStatus::LastBad
+            {
+                break;
+            }
+
+            thread::sleep(Duration::from_secs(1));
+        }
+
         info!("Sending packet over simplex: {:#02x?}", packet);
-        
-        let hex: String = packet.iter().map(|elem| format!("{:02x}", elem)).collect::<Vec<String>>().join("");
-        
-        let request = format!(r#"{{
+
+        let hex: String = packet
+            .iter()
+            .map(|elem| format!("{:02x}", elem))
+            .collect::<Vec<String>>()
+            .join("");
+
+        let request = format!(
+            r#"{{
             mutation {{
                 passthrough(module: "rhm", command: "RMS:GS:SEND {}") {{
                     status,
                     command
                 }}
-            }}"#, hex);
-        
+            }}"#,
+            hex
+        );
+
         let result = query(&simplex, &request, Some(Duration::from_millis(100)))?;
         println!("Result: {:?}", result);
-        // TODO: Verify the result
-        Ok(())
+
+        // It'll take roughly 10 seconds for the message to be sent and then the simplex's Busy
+        // line to go low
+        thread::sleep(Duration::from_secs(10));
+
+        let status = self.check_simplex(&simplex)?;
+        match status {
+            SimplexStatus::LastGood => Ok(()),
+            other => {
+                bail!("Bad simplex response: {:?}", other);
+            }
+        }
+    }
+
+    // Ask the RHM supMCU for the current status of the simplex
+    fn check_simplex(&self, simplex: &ServiceConfig) -> Result<SimplexStatus, Error> {
+        let result = query(simplex, SIMPLEX_STATUS, Some(Duration::from_millis(250)))?;
+
+        let telem_raw = result["mcuTelemetry"].as_str().unwrap_or("");
+        let telem: serde_json::Value = serde_json::from_str(telem_raw)?;
+        let status = if let Some(value) = telem
+            .as_object()
+            .and_then(|obj| obj.get("globalstar_status"))
+        {
+            if value["timestamp"] != 0 {
+                match value["data"].as_u64().unwrap_or(0xFF) {
+                    0 => SimplexStatus::NoTransmissions,
+                    1 => SimplexStatus::Busy,
+                    2 => SimplexStatus::Prepping,
+                    3 => SimplexStatus::Transmitting,
+                    4 => SimplexStatus::LastGood,
+                    5 => SimplexStatus::LastBad,
+                    _ => SimplexStatus::Unknown,
+                }
+            } else {
+                SimplexStatus::Unknown
+            }
+        } else {
+            SimplexStatus::Unknown
+        };
+
+        Ok(status)
     }
 
     fn send_duplex(&self, _packet: &[u8]) -> Result<(), Error> {
@@ -95,4 +163,23 @@ pub enum MessageType {
     Radio = 5,
     SupMCU = 6,
     Temperature = 7,
+}
+
+// Current status of the simplex, as reported by the RHM supMCU
+#[derive(Debug, PartialEq)]
+enum SimplexStatus {
+    // Nothing has been sent (since last reset?)
+    NoTransmissions,
+    // Simplex's busy line is high
+    Busy,
+    // Simplex is preparing to transmit a message
+    Prepping,
+    // Simplex is actively transmitting a message
+    Transmitting,
+    // The last transmission was successful
+    LastGood,
+    // The last transmission failed
+    LastBad,
+    // An unknown status value was received
+    Unknown,
 }
