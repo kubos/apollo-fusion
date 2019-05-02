@@ -27,6 +27,7 @@ use crate::transmit::*;
 use kubos_app::query;
 use std::time::Duration;
 
+// Common function for reading an entry from the telemetry database
 fn get_string(radios: &Radios, msg: &str) -> String {
     match query(&radios.telem_service, msg, Some(Duration::from_millis(100))) {
         Ok(data) => {

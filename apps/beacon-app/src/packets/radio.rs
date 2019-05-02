@@ -18,5 +18,5 @@
 Radio (duplex) @ 1hr
 - Power state
 - # commands (packet receive/sent counters)
-
+- Other useful duplex telemetry?
 */

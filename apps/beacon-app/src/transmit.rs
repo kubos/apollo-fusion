@@ -15,6 +15,8 @@
 //
 
 // Module for actually sending messages
+//
+// All messages are sent over both the simplex and the duplex
 
 use failure::{bail, Error};
 use kubos_app::{query, ServiceConfig};
@@ -68,8 +70,9 @@ impl Radios {
         // If the mutex gets poisoned, we want to crash as noisily as possible
         let simplex = self.simplex.lock().unwrap();
 
-        // TODO: probably make this a counter. Or bring down the whole app if something goes wrong
-        loop {
+        // If the simplex is currently sending a message, it can take up to 10 seconds for it to
+        // finish and be ready for new data
+        for _ in 0..15 {
             // Get the current status of the simplex
             let status = self.check_simplex(&simplex)?;
 
@@ -83,7 +86,7 @@ impl Radios {
             thread::sleep(Duration::from_secs(1));
         }
 
-        info!("Sending packet over simplex: {:#02x?}", packet);
+        debug!("Sending packet over simplex: {:#02x?}", packet);
 
         let hex: String = packet
             .iter()
@@ -92,8 +95,7 @@ impl Radios {
             .join("");
 
         let request = format!(
-            r#"{{
-            mutation {{
+            r#"mutation {{
                 passthrough(module: "rhm", command: "RMS:GS:SEND {}") {{
                     status,
                     command
@@ -102,8 +104,11 @@ impl Radios {
             hex
         );
 
-        let result = query(&simplex, &request, Some(Duration::from_millis(100)))?;
-        println!("Result: {:?}", result);
+        let result = query(&simplex, &request, Some(Duration::from_millis(200)))?;
+        let status = result["passthrough"]["status"].as_bool().unwrap_or(false);
+        if !status {
+            bail!("Failed to send packet to RHM");
+        }
 
         // It'll take roughly 10 seconds for the message to be sent and then the simplex's Busy
         // line to go low
@@ -120,7 +125,7 @@ impl Radios {
 
     // Ask the RHM supMCU for the current status of the simplex
     fn check_simplex(&self, simplex: &ServiceConfig) -> Result<SimplexStatus, Error> {
-        let result = query(simplex, SIMPLEX_STATUS, Some(Duration::from_millis(250)))?;
+        let result = query(simplex, SIMPLEX_STATUS, Some(Duration::from_millis(300)))?;
 
         let telem_raw = result["mcuTelemetry"].as_str().unwrap_or("");
         let telem: serde_json::Value = serde_json::from_str(telem_raw)?;
@@ -148,8 +153,8 @@ impl Radios {
         Ok(status)
     }
 
-    fn send_duplex(&self, _packet: &[u8]) -> Result<(), Error> {
-        //info!("Sending packet over duplex: {:?}", packet);
+    fn send_duplex(&self, packet: &[u8]) -> Result<(), Error> {
+        debug!("Sending packet over duplex: {:?}", packet);
         Ok(())
     }
 }
