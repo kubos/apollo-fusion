@@ -32,6 +32,14 @@ jobs:
       steps:
         - checkout
         - run: cd apps; cargo fmt -- --check
+    apps_tar:
+      docker:
+        - image: kubos/kubos-dev:latest
+      steps:
+        - checkout
+        - run: cd tools; ./build-apps.sh
+        - store_artifacts:
+            path: tools/apps-$(date +%Y.%m.%d).tar.gz
     
 workflows:
   version: 2
@@ -53,6 +61,12 @@ workflows:
               ignore: master
       - apps_fmt:
           filters:
+            branches:
+              ignore: master
+      - apps_tar:
+          filters:
+            tags:
+              only: /^[0-9]+(\.[0-9]+)*$/
             branches:
               ignore: master
         
