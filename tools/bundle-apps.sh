@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Build and bundle all the apps into a tar file
+#
+# The tar file also includes `install-apps.sh` which will run the necessary app service commands
+# on the OBC to install each app
+
 set -e
 
 DIR=$PWD
@@ -21,16 +26,15 @@ OUTPUT_DIR=${DIR}/apps
 APPS_DIR=${DIR}/../apps
 TARGET_DIR=${APPS_DIR}/target/arm-unknown-linux-gnueabihf/release
 
-mkdir ${OUTPUT_DIR}
+mkdir -p ${OUTPUT_DIR}
 cd ${APPS_DIR}
 
 ### Build all the Rust-based apps
 
 # Get the latest version of the Kubos repo to build with
-cargo update
+#cargo update
 
-#for app in "beacon-app" "deploy-app" "telem-app" "obc-hs" ;
-for app in "deploy-app" "telem-app" ;
+for app in "beacon-app" "deploy-app" "telem-app" "obc-hs" ;
 do
     # Create the final output directory
     mkdir -p ${OUTPUT_DIR}/${app}
@@ -45,7 +49,7 @@ do
 done
 
 ### Copy all the Python-based apps
-if false; then
+
 for app in "adcs-hs" ;
 do 
     cd ${APPS_DIR}/${app}
@@ -54,12 +58,11 @@ do
     # Copy everything to the output directory
     cp -r * ${OUTPUT_DIR}/${app}
 done
-fi
 
 ### Tar everything up for easy transportation
 
 cd ${DIR}
-tar -czf apps-$(date +%Y.%m.%d).tar.gz apps
+tar -czf apps-$(date +%Y.%m.%d).tar.gz apps install-apps.sh
 
 ### Cleanup
 
