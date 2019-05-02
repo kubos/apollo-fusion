@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#set -e
+set -e
 
 DIR=$PWD
 OUTPUT_DIR=${DIR}/apps
@@ -29,7 +29,8 @@ cd ${APPS_DIR}
 # Get the latest version of the Kubos repo to build with
 cargo update
 
-for app in "beacon-app" "deploy-app" "telem-app" "obc-hs" ;
+#for app in "beacon-app" "deploy-app" "telem-app" "obc-hs" ;
+for app in "deploy-app" "telem-app" ;
 do
     # Create the final output directory
     mkdir -p ${OUTPUT_DIR}/${app}
@@ -44,7 +45,7 @@ do
 done
 
 ### Copy all the Python-based apps
-
+if false; then
 for app in "adcs-hs" ;
 do 
     cd ${APPS_DIR}/${app}
@@ -53,6 +54,7 @@ do
     # Copy everything to the output directory
     cp -r * ${OUTPUT_DIR}/${app}
 done
+fi
 
 ### Tar everything up for easy transportation
 
