@@ -32,7 +32,6 @@ fn get_string(radios: &Radios, msg: &str) -> String {
     match query(&radios.telem_service, msg, Some(Duration::from_millis(100))) {
         Ok(data) => {
             let value = data["telemetry"][0]["value"].as_str().unwrap_or("");
-            println!("Received: {}", value);
             value.to_owned()
         }
         Err(_) => "".to_owned(),

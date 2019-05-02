@@ -36,8 +36,11 @@ use kubos_app::*;
 use log::*;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 
 struct MyApp;
+
+const THREAD_INTERVAL: Duration = Duration::from_secs(30);
 
 impl AppHandler for MyApp {
     fn on_boot(&self, _args: Vec<String>) -> Result<(), Error> {
@@ -57,11 +60,14 @@ impl AppHandler for MyApp {
         };
 
         // Spawn threads for each of the beacon messages
+        // (putting a 30 second delay in between each one to help prevent them from running at
+        // exactly the same time)
 
         let power_radios = radios.clone();
         let handle = thread::spawn(move || power::power_packet(power_radios));
         debug!("Spawning power beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         let temp_radios = radios.clone();
         let handle = thread::spawn(move || temperature::temp_packet(temp_radios));
@@ -70,31 +76,37 @@ impl AppHandler for MyApp {
             handle.thread().id()
         );
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         let errors_radios = radios.clone();
         let handle = thread::spawn(move || errors::errors_packet(errors_radios));
         debug!("Spawning errors beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         let obc_radios = radios.clone();
         let handle = thread::spawn(move || obc::obc_packet(obc_radios));
         debug!("Spawning OBC beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         let supmcu_radios = radios.clone();
         let handle = thread::spawn(move || supmcu::supmcu_packet(supmcu_radios));
         debug!("Spawning supMCU beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         let gps_radios = radios.clone();
         let handle = thread::spawn(move || gps::gps_packet(gps_radios));
         debug!("Spawning GPS beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         let adcs_radios = radios.clone();
         let handle = thread::spawn(move || adcs::adcs_packet(adcs_radios));
         debug!("Spawning ADCS beacon thread: {:?}", handle.thread().id());
         handles.push(handle);
+        thread::sleep(THREAD_INTERVAL);
 
         // TODO: Radio (duplex) packet
 
