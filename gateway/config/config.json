@@ -1,0 +1,8 @@
+{
+  "gateway-token": "1a2ea37cac41030d236d05b90bc0e6916dfec83ab2da301015a9a6d7aaa83645",
+  "major-tom-endpoint": "wss://apollofusion@kubos.com:sittinginatincan@app.majortom.cloud/gateway_api/v1.0",
+  "system-name": "apollo-fusion",
+  "ssl-verify": true,
+  "ssl-ca-bundle": "C:\\Users\\Catherine\\git\\apollo-fusion\\gateway\\config\\cacert.pem",
+  "sat-ip": "168.168.2.20"
+}
