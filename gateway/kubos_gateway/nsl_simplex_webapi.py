@@ -13,6 +13,7 @@ NSL web interface module
 
 import requests            # See http://docs.python-requests.org/en/master/
 import copy
+import logging
 
 USER_NAME = 'kubos'
 PASSWORD = 'Denton2Space!'
@@ -21,7 +22,8 @@ PASSWORD = 'Denton2Space!'
 #MISSION_ID = '949'
 #SIMPLEX_ESN = '0-3216405'
 
-# Other simplex that we have access to
+# Other simplex that we have access to.
+# Remove when AF simplex has transmitted data
 MISSION_ID = '912'
 SIMPLEX_ESN = '0-2316106'
 
@@ -29,6 +31,8 @@ BASE_URL = 'https://data2.nsldata.com/~gsdata/webAPIv1.0/'
 LOGIN_URL = BASE_URL + 'login.php?UserName=' + USER_NAME + '&Password=' + PASSWORD
 SIMPLEX_URL = BASE_URL + 'simplex.php?MissionID=' + MISSION_ID +'&ESN=' + SIMPLEX_ESN
 LOGOUT_URL = BASE_URL + 'logout.php'
+
+LOGGER = logging.getLogger(__name__)
 
 class NSLWeb():
     """ NSL Web API """
@@ -48,7 +52,7 @@ class NSLWeb():
             #PHPSESSID contains the critical session cookie
             #cookies = copy.deepcopy(r.cookies)
             cookies = r.cookies
-            print('Cookie = ', cookies['PHPSESSID'])
+            LOGGER.debug('Cookie = {}'.format(cookies['PHPSESSID']))
 
             #------------------
             # Download simplex data
@@ -58,7 +62,7 @@ class NSLWeb():
             r = requests.get(SIMPLEX_URL, cookies=cookies)
             simplex_records = r.json()
             if simplex_records['requestResult']:
-                print('Response =', simplex_records['results'])
+                LOGGER.debug('Response = {}'.format(simplex_records['results']))
             else:
                 raise Exception('Failed to fetch simplex records: {}'.format(simplex_records))
 
@@ -67,10 +71,10 @@ class NSLWeb():
             #------------------
             r = requests.get(LOGOUT_URL, cookies=cookies)
             response = r.json()
-            if response['requestResult'] is false:
+            if response['requestResult'] is False:
                 raise Exception('Failed to logout of NSL server: {}'.format(response))
 
-            return response["results"]
+            return simplex_records["results"]
 
         except Exception as e:
-            print('Error:', e.args)
+            LOGGER.debug('Error: {}'.format(e.args))

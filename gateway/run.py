@@ -1,22 +1,17 @@
+# Copyright 2019 Kubos Corporation
+# Licensed under the Apache License, Version 2.0
+# See LICENSE file for details.
+
 import json
 import logging
 import sys
 import argparse
 
 from kubos_gateway.gateway import Gateway
-from kubos_gateway.tools.stream_tlm import TelemetryStreaming
-from kubos_gateway.tools.power_tlm import DemoDataStreaming
 
 def main():
-    sys.stdout.write("hello from Python %s\n" % (sys.version,))
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        '-m',
-        '--mode',
-        help='Mode of the gateway. Defaults to "gateway", can be alternatively set to "fixed" or "demo".',
-        required=False)
-
+    
     parser.add_argument(
         '-c',
         '--config',
@@ -47,13 +42,7 @@ def main():
     else:
         Gateway.set_log_level(logging.DEBUG, very_verbose=True)
 
-    if args.mode == 'fixed':
-        TelemetryStreaming.run_forever(config)
-    elif args.mode == 'demo':
-        DemoDataStreaming.run_forever(config)
-    else:
-        Gateway.run_forever(config)
+    Gateway.run_forever(config)
 
 if __name__ == "__main__":
-    sys.stdout.write("hello from Python %s\n" % (sys.version,))
     main()
