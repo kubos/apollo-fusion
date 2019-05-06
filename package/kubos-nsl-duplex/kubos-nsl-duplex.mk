@@ -30,7 +30,7 @@ endef
 
 # Install the init script
 define NSL_DUPLEX_INSTALL_INIT_SYSV
-	$(INSTALL) -D -m 0755 $(BR2_EXTERNAL_KUBOS_LINUX_PATH)/package/kubos/kubos-nsl-duplex/kubos-nsl-duplex \
+	$(INSTALL) -D -m 0755 $(BR2_EXTERNAL_APOLLO_FUSION_PATH)/package/kubos-nsl-duplex/kubos-nsl-duplex \
 	    $(TARGET_DIR)/etc/init.d/S$(BR2_KUBOS_NSL_DUPLEX_INIT_LVL)kubos-nsl-duplex
 endef
 

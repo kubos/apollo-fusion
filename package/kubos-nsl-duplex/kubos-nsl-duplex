@@ -1,6 +1,6 @@
 #!/bin/sh
 
-NAME=nsl-dupex-d2-comms-service
+NAME=nsl-duplex-d2-comms-service
 PROG=/usr/sbin/${NAME}
 PID=/var/run/${NAME}.pid
 
