@@ -14,6 +14,7 @@
 // limitations under the License.
 //
 
+mod duplex;
 mod eps;
 mod mai400;
 mod obc;
@@ -32,6 +33,10 @@ struct MyApp;
 impl AppHandler for MyApp {
     fn on_boot(&self, _args: Vec<String>) -> Result<(), Error> {
         loop {
+            if let Err(error) = duplex::get_telem() {
+                error!("Error while fetching Duplex telemetry: {:?}", error);
+            }
+
             if let Err(error) = obc::get_telem() {
                 error!("Error while fetching OBC telemetry: {:?}", error);
             }
@@ -57,6 +62,10 @@ impl AppHandler for MyApp {
     }
 
     fn on_command(&self, _args: Vec<String>) -> Result<(), Error> {
+        if let Err(error) = duplex::get_telem() {
+            error!("Error while fetching Duplex telemetry: {:?}", error);
+        }
+
         if let Err(error) = obc::get_telem() {
             error!("Error while fetching OBC telemetry: {:?}", error);
         }
