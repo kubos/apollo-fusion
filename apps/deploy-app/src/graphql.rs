@@ -109,11 +109,12 @@ pub const SIMPLEX_POWER: &str = r#"
     }
 "#;
 
-// Configure the simplex's UART
-// BBB UART3 = CSK UART4
+// Configure the simplex's communication port
+// Note: The simplex is connected to the stack via the RHM's I2C bus, not via a direct UART
+// connection
 pub const SIMPLEX_COMM: &str = r#"
     mutation {
-        passthrough(module: "rhm", command: "RHM:GS:COMM UART4") {
+        passthrough(module: "rhm", command: "RHM:GS:COMM I2C") {
             status
         }
     }
