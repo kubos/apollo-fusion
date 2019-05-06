@@ -6,7 +6,7 @@ import sys
 import time
 import logging
 
-SERVICES = app_api.Services()
+SERVICES = app_api.Services("/Users/jessecoffey/Workspace/apollo-fusion/common/overlay/home/system/etc/config.toml")
 
 ## Housekeeping
 WHEEL_SPEED_THRESHOLD = 5000 # RPM
@@ -16,13 +16,13 @@ ANGLE_TO_GO_THRESHOLD_TIMEOUT = 3*60 # 3 Minutes
 RATE_THRESHOLD = 6 # deg/s
 RATE_THRESHOLD_TIMEOUT = 10 # Seconds
 ADCS_SETUP_TIMEOUT = 24*60*60 # 24 hours
-HS_LOOP_TIME = 1*60 # 5 minutes
+HS_LOOP_TIME = 1*60 # 1 minute
 NOOP_RETRY = 3
 REBOOT_COUNT = 0
 
 ## Setup
 DETUMBLE_RATE_THRESHOLD = 0.5 # deg/s
-DETUMBLE_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops
+DETUMBLE_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops (12 hours)
 DETUMBLE_RATE_LOOP_TIME = 60 # Seconds
 POINTING_ANGLE_THRESHOLD = 1 # Degree
 POINTING_ANGLE_TIMEOUT = 5*60 # 5 Minutes
@@ -39,6 +39,7 @@ def on_boot(logger):
     power_on(logger=logger)
 
     # Launch ADCS Setup
+    ## TODO: Test mutation to start it
     trigger_adcs_setup(logger=logger)
 
     time.sleep(5) # Sleep to wait for MAI to come online
@@ -46,38 +47,37 @@ def on_boot(logger):
     start_time = time.time()
     previous_timestamp = 0
     while True:
-        # try:
+        try:
 
-        # Check timestamp
-        logger.debug("Checking for timestamp change")
-        previous_timestamp = check_timestamp(logger=logger,previous_timestamp=previous_timestamp)
+            # Check timestamp
+            logger.debug("Checking for timestamp change")
+            previous_timestamp = check_timestamp(logger=logger,previous_timestamp=previous_timestamp)
 
-        # Check for reboot
-        logger.debug("Checking for reboot")
-        check_reboot(logger=logger)
+            # Check for thresholds
+            logger.debug("Checking wheel speeds")
+            check_speed(logger=logger)
 
-        # Check for thresholds
-        logger.debug("Checking wheel speeds")
-        check_speed(logger=logger)
+            logger.debug("Checking Angle To Go")
+            check_angle(logger=logger)
 
-        logger.debug("Checking Angle To Go")
-        check_angle(logger=logger)
+            logger.debug("Checking Spin")
+            check_spin(logger=logger)
 
-        logger.debug("Checking Spin")
-        check_spin(logger=logger)
-
-        # except Exception as e:
-        #     logger.error("Something went wrong: " + str(e) + "\r\n")
+        except Exception as e:
+            logger.error("Something went wrong: " + str(e) + "\r\n")
+            time.sleep(HS_LOOP_TIME)
 
         if (start_time + ADCS_SETUP_TIMEOUT) < time.time():
             """
             Launch ADCS setup every 24 hours
             """
+            start_time = time.time()
             trigger_adcs_setup(logger=logger)
 
         time.sleep(HS_LOOP_TIME)
 
 def trigger_adcs_setup(logger):
+    ## TODO: Send mutation to app service
     startApp = '''
     mutation {
         startApp(name: "adcs-hs", runLevel: OnCommand): {
@@ -113,6 +113,7 @@ def check_speed(logger):
     Any of the 3 wheel speeds > WHEEL_SPEED_THRESHOLD
     for WHEEL_SPEED_THRESHOLD_TIMEOUT seconds
     """
+    ## TODO: Check units on query results for telemetry db and mai service
     wheel_speed_x = "rwsSpeedTach_0"
     x_speed = query_tlmdb(logger=logger,tlm_key=wheel_speed_x)['value']
     wheel_speed_y = "rwsSpeedTach_1"
@@ -135,6 +136,7 @@ def check_angle(logger,reboot = True, threshold=ANGLE_TO_GO_THRESHOLD,timeout=AN
     Angle to Go > ANGLE_TO_GO_THRESHOLD degrees
     for ANGLE_TO_GO_THRESHOLD_TIMEOUT seconds
     """
+    ## TODO: Check units on query results for telemetry db and mai service
     angle_to_go_key = "angleToGo"
     angle = query_tlmdb(logger=logger,tlm_key=angle_to_go_key)['value']
 
@@ -143,7 +145,7 @@ def check_angle(logger,reboot = True, threshold=ANGLE_TO_GO_THRESHOLD,timeout=AN
         time.sleep(1)
         counter+=1
         if counter >= ANGLE_TO_GO_THRESHOLD_TIMEOUT:
-            if reboot = True:
+            if reboot == True:
                 reboot_mai(logger=logger,reason="Angle to Go over {} for {} seconds. Angle: {}".format(ANGLE_TO_GO_THRESHOLD,ANGLE_TO_GO_THRESHOLD_TIMEOUT,angle))
             return False
         angle = query_mai(logger=logger,tlm_key=angle_to_go_key)
@@ -154,6 +156,7 @@ def check_spin(logger,reboot = True,threshold = RATE_THRESHOLD,timeout = RATE_TH
     RMS of Body Rate > RATE_THRESHOLD deg/s
     for RATE_THRESHOLD_TIMEOUT seconds
     """
+    ## TODO: Check units on query results for telemetry db and mai service
     logger.debug("Checking Body Rate")
     x_key = "omegaB_0"
     y_key = "omegaB_1"
@@ -170,7 +173,7 @@ def check_spin(logger,reboot = True,threshold = RATE_THRESHOLD,timeout = RATE_TH
         time.sleep(loop_time)
         counter+=1
         if counter >= timeout:
-            if reboot = True:
+            if reboot == True:
                 reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(RATE_THRESHOLD,RATE_THRESHOLD_TIMEOUT,rms))
             return False
         rate = query_mai(logger=logger,tlm_key=mai_rate_key)
@@ -254,12 +257,13 @@ def on_command(logger):
     update_gps_info(logger=logger)
 
     logger.info("Going to Nadir pointing")
-    set_attitude_determination_mode(logger=logger,mode=SUNMAG)
-    set_attitude_control_mode(logger=logger,mode=NADIR)
+    ## TODO: Make these functions
+    # set_attitude_determination_mode(logger=logger,mode=SUNMAG)
+    # set_attitude_control_mode(logger=logger,mode=NADIR)
 
     logger.info("Waiting for Angle to converge")
     wait_for_angle(logger=logger)
-    set_attitude_determination_mode(logger=logger,mode=EHS)
+    # set_attitude_determination_mode(logger=logger,mode=EHS)
 
     logger.info("ADCS Setup Complete")
 
@@ -308,8 +312,7 @@ def wait_for_detumble(logger):
 
 def update_gps_info(logger):
     counter = 0
-    while True:
-        counter += 1
+    for i in range(GPS_RETRIES):
         power_gps(logger=logger)
         lock = wait_for_lock(logger=logger)
         if lock != False:
@@ -319,24 +322,26 @@ def update_gps_info(logger):
                 power_gps(logger=logger,state='OFF')
                 return
         logger.warning('Updating Lock was unsuccessful. Retrying.')
-        if counter > GPS_RETRIES:
-            power_gps(logger=logger,state='OFF')
-            raise
+
+    logger.error('Updating Lock was unsuccessful and reached maximum retries')
+    power_gps(logger=logger,state='OFF')
+    raise
 
 
 def power_gps(logger,state='ON'):
+    ## TODO: Power control for the GPS
     logger.info(f'Power GPS: {state}')
     pass
 
 def wait_for_lock(logger):
+    ## TODO: Test this. It's currently entirely untested
     # Wait until GPS Lock is current (Position and velocity are finesteering, and time is less than 5 minutes old)
     logger.info('Waiting for GPS Lock')
     time_status = None
     pos_status = None
     vel_status = None
     LOCKED = "FINESTEERING"
-    counter = 0
-    while counter >= GPS_LOCK_TIMEOUT:
+    for i in range(GPS_LOCK_TIMEOUT):
         if time_status is not LOCKED:
             logger.debug(f'Waiting for time convergence: {time_status}')
         if pos_status is not LOCKED:
@@ -344,17 +349,17 @@ def wait_for_lock(logger):
         if vel_status is not LOCKED:
             logger.debug(f'Waiting for velocity convergence: {vel_status}')
 
-        if all(status = LOCKED for status in [time_status,pos_status,vel_status]):
+        if all(status == LOCKED for status in [time_status,pos_status,vel_status]):
             logger.info("Lock Achieved!")
             lock = True
             return lock
-
-        counter += 1
         time.sleep(GPS_LOOP_TIME)
 
     logger.error(f"GPS Timed out waiting for lock")
 
 def submit_lock_data(logger,lock):
+    ## TODO: The functionality requires the latest version of the MAI software and we currently don't have access to it.
+    ## The MAI would need to be updated with it, the MAI service would also need to be updated, then this can be implemented.
     # Feed BestXYZ GPS data directly into AODCS (Attitude and Orbit Determination and Control System)
     logger.debug("Setting System Time")
     # Set Processor Time
