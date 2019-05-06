@@ -80,7 +80,7 @@ def on_boot(logger):
 def trigger_adcs_setup(logger):
     startApp = '''
     mutation {
-        startApp(name: adcs-hs, runLevel: OnCommand): {
+        startApp(name: "adcs-hs", runLevel: OnCommand): {
             success
             errors
             pid
