@@ -85,14 +85,13 @@ impl AppHandler for MyApp {
         if let Err(error) = sup_mcu::get_telem() {
             error!("Error while fetching Sup MCU telemetry: {:?}", error);
         }
-
         Ok(())
     }
 }
 
 fn main() -> Result<(), Error> {
     let app = MyApp;
-    app_main!(&app)?;
+    app_main!(&app, log::LevelFilter::Info)?;
 
     Ok(())
 }

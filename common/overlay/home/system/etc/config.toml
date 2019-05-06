@@ -25,12 +25,16 @@ port = 8003
 [pumpkin-mcu-service.modules]
 [pumpkin-mcu-service.modules.sim]
 address = 80
-[pumpkin-mcu-service.modules.gpsrm]
-address = 81
+[pumpkin-mcu-service.modules.bim]
+address = 82
 [pumpkin-mcu-service.modules.pim]
 address = 83
 [pumpkin-mcu-service.modules.rhm]
 address = 85
+[pumpkin-mcu-service.modules.aim2]
+address = 86
+[pumpkin-mcu-service.modules.bm2]
+address = 92
 
 [pumpkin-mcu-service.addr]
 ip = "0.0.0.0"
