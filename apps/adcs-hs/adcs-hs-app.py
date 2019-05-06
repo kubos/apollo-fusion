@@ -22,7 +22,7 @@ NOOP_RETRY = 3
 REBOOT_COUNT = 0
 
 ## Setup
-## TODO: Test that these constants are the appropriate values 
+## TODO: Test that these constants are the appropriate values
 DETUMBLE_BODY_RATE_THRESHOLD = 0.5 # deg/s
 DETUMBLE_BODY_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops (12 hours)
 DETUMBLE_BODY_RATE_LOOP_TIME = 60 # Seconds
@@ -120,12 +120,9 @@ def check_speed(logger):
     for WHEEL_SPEED_THRESHOLD_TIMEOUT seconds
     """
     ## TODO: Check units on query results for telemetry db and mai service
-    wheel_speed_x = "rwsSpeedTach_0"
-    x_speed = query_tlmdb(logger=logger,tlm_key=wheel_speed_x)['value']
-    wheel_speed_y = "rwsSpeedTach_1"
-    y_speed = query_tlmdb(logger=logger,tlm_key=wheel_speed_y)['value']
-    wheel_speed_z = "rwsSpeedTach_2"
-    z_speed = query_tlmdb(logger=logger,tlm_key=wheel_speed_z)['value']
+    x_speed = query_tlmdb(logger=logger,tlm_key="rwsSpeedTach_0")['value']
+    y_speed = query_tlmdb(logger=logger,tlm_key="rwsSpeedTach_1")['value']
+    z_speed = query_tlmdb(logger=logger,tlm_key="rwsSpeedTach_2")['value']
     speed = [x_speed,y_speed,z_speed]
     mai_wheel_speed_key = "rwsSpeedTach"
 
@@ -137,24 +134,23 @@ def check_speed(logger):
             reboot_mai(logger=logger,reason="Wheel speed over {} for {} seconds. Speeds: {}".format(WHEEL_SPEED_THRESHOLD,WHEEL_SPEED_THRESHOLD_TIMEOUT,speed))
         speed = query_mai(logger=logger,tlm_key=mai_wheel_speed_key)
 
-def check_angle(logger,reboot = True, threshold=ANGLE_TO_GO_THRESHOLD,timeout=ANGLE_TO_GO_THRESHOLD_TIMEOUT):
+def check_angle(logger,reboot=True,threshold=ANGLE_TO_GO_THRESHOLD,timeout=ANGLE_TO_GO_THRESHOLD_TIMEOUT):
     """
-    Angle to Go > ANGLE_TO_GO_THRESHOLD degrees
-    for ANGLE_TO_GO_THRESHOLD_TIMEOUT seconds
+    Angle to Go > threshold degrees
+    for timeout seconds
     """
     ## TODO: Check units on query results for telemetry db and mai service
-    angle_to_go_key = "angleToGo"
-    angle = query_tlmdb(logger=logger,tlm_key=angle_to_go_key)['value']
+    angle = query_tlmdb(logger=logger,tlm_key="angleToGo")['value']
 
     counter = 0
-    while angle > ANGLE_TO_GO_THRESHOLD:
+    while angle > threshold:
         time.sleep(1)
         counter+=1
-        if counter >= ANGLE_TO_GO_THRESHOLD_TIMEOUT:
+        if counter >= timeout:
             if reboot == True:
-                reboot_mai(logger=logger,reason="Angle to Go over {} for {} seconds. Angle: {}".format(ANGLE_TO_GO_THRESHOLD,ANGLE_TO_GO_THRESHOLD_TIMEOUT,angle))
+                reboot_mai(logger=logger,reason="Angle to Go over {} for {} seconds. Angle: {}".format(threshold,timeout,angle))
             return False
-        angle = query_mai(logger=logger,tlm_key=angle_to_go_key)
+        angle = query_mai(logger=logger,tlm_key="angleToGo")
     return True
 
 def check_spin(logger,reboot = True,threshold = BODY_RATE_THRESHOLD,timeout = BODY_RATE_THRESHOLD_TIMEOUT,loop_time = 1):
@@ -164,15 +160,10 @@ def check_spin(logger,reboot = True,threshold = BODY_RATE_THRESHOLD,timeout = BO
     """
     ## TODO: Check units on query results for telemetry db and mai service
     logger.debug("Checking Body Rate")
-    x_key = "omegaB_0"
-    y_key = "omegaB_1"
-    z_key = "omegaB_2"
-    x = query_tlmdb(logger=logger,tlm_key=x_key)['value']
-    y = query_tlmdb(logger=logger,tlm_key=y_key)['value']
-    z = query_tlmdb(logger=logger,tlm_key=z_key)['value']
-    # rms_rate = np.sqrt(np.mean(np.square([x,y,z])))
+    x = query_tlmdb(logger=logger,tlm_key="omegaB_0")['value']
+    y = query_tlmdb(logger=logger,tlm_key="omegaB_1")['value']
+    z = query_tlmdb(logger=logger,tlm_key="omegaB_2")['value']
     rms_rate = rms([x,y,z])
-    mai_rate_key = "omegaB"
 
     counter = 0
     while rms_rate > threshold:
@@ -180,9 +171,9 @@ def check_spin(logger,reboot = True,threshold = BODY_RATE_THRESHOLD,timeout = BO
         counter+=1
         if counter >= timeout:
             if reboot == True:
-                reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(BODY_RATE_THRESHOLD,BODY_RATE_THRESHOLD_TIMEOUT,rms))
+                reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(threshold,timeout,rms))
             return False
-        rate = query_mai(logger=logger,tlm_key=mai_rate_key)
+        rate = query_mai(logger=logger,tlm_key="omegaB")
         rms_rate = rms(rate)
     return True
 
@@ -253,8 +244,6 @@ def rms(array):
 
 def on_command(logger):
     # Sets up ADCS
-    logger.info("ADCS Setup Started. Powering on GPS")
-    power_gps(logger=logger)
 
     logger.info("Waiting for Detumble")
     wait_for_detumble(logger=logger)
