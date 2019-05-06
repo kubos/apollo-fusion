@@ -19,12 +19,16 @@
 use kubos_app::*;
 use serde_json::{json, ser};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket};
+use std::thread;
+use std::time::Duration;
 
 // Send a list of key/value pairs to the telemetry database via the direct UDP port
 pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
     let config = ServiceConfig::new("telemetry-service");
 
-    let port = config.get("direct_port").unwrap();
+    let port = config
+        .get("direct_port")
+        .expect("No `direct_port` param given");;
 
     let host = config.hosturl().to_owned();
     let ip: Vec<&str> = host.split(':').collect();
@@ -45,6 +49,9 @@ pub fn send_telem(subsystem: &str, telem_vec: Vec<(String, String)>) {
         socket
             .send_to(&ser::to_vec(&message).unwrap(), &remote_addr)
             .unwrap();
+
+        // Give the telemetry service just a little bit of breathing room
+        thread::sleep(Duration::from_millis(1));
     }
 }
 

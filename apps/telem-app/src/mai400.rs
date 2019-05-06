@@ -21,7 +21,7 @@ use failure::{bail, Error};
 use kubos_app::*;
 use std::time::Duration;
 
-const MAI_TELEMETRY: &str = r#"{
+const MAI_NOMINAL: &str = r#"{
     telemetry {
         nominal {
             gpsTime,
@@ -49,7 +49,11 @@ const MAI_TELEMETRY: &str = r#"{
             omegaB,
             nb,
             neci,
-        },
+        }
+    }
+}"#;
+const MAI_DEBUG: &str = r#"{
+    telemetry {
         debug {
             irehs {
                 thermopilesA,
@@ -118,7 +122,13 @@ const MAI_TELEMETRY: &str = r#"{
                 accel,
                 gyro,
                 gyroTemp,
-            },
+            }
+        }
+    }
+}"#;
+const MAI_ROTATING: &str = r#"{
+    telemetry {
+        debug{
             rotating {
                 bFieldIgrf,
                 sunVecEph,
@@ -212,29 +222,55 @@ pub fn get_telem() -> Result<(), Error> {
 
     let service = ServiceConfig::new("mai400-service");
 
-    // Get all the basic telemetry
+    // The MAI-400 has a *bunch* of fields, so we're going to break this into three chunks to
+    // help reduce the amount of data returned at one time
 
-    let result = query(&service, MAI_TELEMETRY, Some(Duration::from_millis(100)))?;
+    // Get the nominal telemetry
+
+    let result = query(&service, MAI_NOMINAL, Some(Duration::from_secs(2)))?;
 
     if result["telemetry"]["nominal"]["gpsTime"] == 0 {
         bail!("MAI-400 offline");
     }
 
-    let mut telem_vec: Vec<(String, String)> = vec![];
     let nominal = &result["telemetry"]["nominal"].as_object();
-    let debug = &result["telemetry"]["debug"].as_object();
+
+    let mut telem_vec: Vec<(String, String)> = vec![];
 
     // Auto-convert returned JSON into a flat key-value vector
     if let Some(data) = nominal {
         process_json(&mut telem_vec, data, "".to_owned());
+        // Send it to the telemetry database
+        send_telem("MAI400", telem_vec);
     }
 
+    // Get the debug telemetry, minus the rotating variables
+    let result = query(&service, MAI_DEBUG, Some(Duration::from_secs(2)))?;
+
+    let debug = &result["telemetry"]["debug"].as_object();
+
+    let mut telem_vec: Vec<(String, String)> = vec![];
+
+    // Auto-convert returned JSON into a flat key-value vector
     if let Some(data) = debug {
         process_json(&mut telem_vec, data, "".to_owned());
+        // Send it to the telemetry database
+        send_telem("MAI400", telem_vec);
     }
 
-    // Send it to the telemetry database
-    send_telem("MAI400", telem_vec);
+    // Get the rotating variables telemetry
+    let result = query(&service, MAI_ROTATING, Some(Duration::from_secs(2)))?;
+
+    let rotating = &result["telemetry"]["debug"]["rotating"].as_object();
+
+    let mut telem_vec: Vec<(String, String)> = vec![];
+
+    // Auto-convert returned JSON into a flat key-value vector
+    if let Some(data) = rotating {
+        process_json(&mut telem_vec, data, "".to_owned());
+        // Send it to the telemetry database
+        send_telem("MAI400", telem_vec);
+    }
 
     Ok(())
 }
