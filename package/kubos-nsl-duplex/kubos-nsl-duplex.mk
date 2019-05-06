@@ -22,7 +22,7 @@ define NSL_DUPLEX_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(BUILD_DIR)/kubos-$(KUBOS_VERSION)/$(CARGO_OUTPUT_DIR)/nsl-duplex-d2-comms-service \
 		$(TARGET_DIR)/usr/sbin
 		
-    echo 'CHECK PROCESS kubos-NSL_DUPLEX PIDFILE /var/run/NSL_DUPLEX-service.pid' > $(TARGET_DIR)/etc/monit.d/kubos-NSL_DUPLEX.cfg
+    echo 'CHECK PROCESS kubos-nsl-duplex PIDFILE /var/run/nsl-duplex-service.pid' > $(TARGET_DIR)/etc/monit.d/kubos-nsl-duplex.cfg
     echo '    START PROGRAM = "/etc/init.d/S${BR2_KUBOS_NSL_DUPLEX_INIT_LVL}kubos-nsl-duplex start"' >> $(TARGET_DIR)/etc/monit.d/kubos-nsl-duplex.cfg 
     echo '    IF ${BR2_KUBOS_NSL_DUPLEX_RESTART_COUNT} RESTART WITHIN ${BR2_KUBOS_NSL_DUPLEX_RESTART_CYCLES} CYCLES THEN TIMEOUT' \
     >> $(TARGET_DIR)/etc/monit.d/kubos-nsl-duplex.cfg
