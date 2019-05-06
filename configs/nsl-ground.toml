@@ -1,0 +1,15 @@
+[nsl-duplex-ground-service]
+nsl_user = "kubos"
+nsl_password = "Denton2Space!"
+# This mission_id corresponds to the one assigned
+# to the flight duplex currently at pumpkin
+mission_id = 948
+
+# These values align with corresponding values
+# in the duplex-gateway.json config file.
+[nsl-duplex-ground-service.comms]
+gateway_ip = "127.0.0.1"
+gateway_port = 15002
+ground_ip = "127.0.0.1"
+ground_port = 15003
+timeout = 1500
