@@ -9,6 +9,7 @@ import logging
 SERVICES = app_api.Services("/Users/jessecoffey/Workspace/apollo-fusion/common/overlay/home/system/etc/config.toml")
 
 ## Housekeeping
+## TODO: Test that these constants are the appropriate values
 WHEEL_SPEED_THRESHOLD = 5000 # RPM
 WHEEL_SPEED_THRESHOLD_TIMEOUT = 20 # Seconds
 ANGLE_TO_GO_THRESHOLD = 2 # degrees
@@ -21,6 +22,7 @@ NOOP_RETRY = 3
 REBOOT_COUNT = 0
 
 ## Setup
+## TODO: Test that these constants are the appropriate values 
 DETUMBLE_RATE_THRESHOLD = 0.5 # deg/s
 DETUMBLE_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops (12 hours)
 DETUMBLE_RATE_LOOP_TIME = 60 # Seconds
@@ -42,7 +44,8 @@ def on_boot(logger):
     ## TODO: Test mutation to start it
     trigger_adcs_setup(logger=logger)
 
-    time.sleep(5) # Sleep to wait for MAI to come online
+    ## TODO: Check that this sleep time is sufficient
+    time.sleep(20) # Sleep to wait for MAI to come online
 
     start_time = time.time()
     previous_timestamp = 0
@@ -50,10 +53,12 @@ def on_boot(logger):
         try:
 
             # Check timestamp
+            ## TODO: Test that this actually works
             logger.debug("Checking for timestamp change")
             previous_timestamp = check_timestamp(logger=logger,previous_timestamp=previous_timestamp)
 
             # Check for thresholds
+            ## TODO: Check all of these check functions against real MAI data
             logger.debug("Checking wheel speeds")
             check_speed(logger=logger)
 
@@ -71,6 +76,7 @@ def on_boot(logger):
             """
             Launch ADCS setup every 24 hours
             """
+            ## TODO: Test that this triggers a setup every 24 hours
             start_time = time.time()
             trigger_adcs_setup(logger=logger)
 
@@ -267,40 +273,13 @@ def on_command(logger):
 
     logger.info("ADCS Setup Complete")
 
-    """
-    On Board Setup (performed on every boot up):
-
-    Turn on MAI
-    Wait until detumbling is finished
-    Check Body Rate every 1 minute
-    If it’s < 0.5 deg/s, check every second for 30 seconds
-    12 hours has passed
-    (B dot can be used and can be verified with body rate, but body rate is less reliable for detumbling. Body rate should be roughly .1 degree)
-    Turn on GPS
-    Wait until GPS Lock is current (Position and velocity are finesteering, and time is less than 5 minutes old)
-    Check every 1 minute
-    If it waits over 1 hour:
-    abort setup
-    issue error
-    Go to Safe Mode (acquisition)
-    Feed BestXYZ GPS data directly into AODCS (Attitude and Orbit Determination and Control System)
-    Sets GPS Time
-    Sets RV
-    Set Attitude determination mode to Mode 0: Sun/Mag Mode (CSS or sun/mag)
-    Set ACS mode to Mode 3: Normal Mode (Nadir)
-    Wait to get to Nadir/Quaternion/desired orientation
-    Angle to Go is close to zero < 1 degree for 30 seconds
-    Check every second
-    Abort and go to acquisition mode if it doesn’t converge in 5 minutes
-    Set Att Det Mode to Mode 2: EHS/Mag. (EHS - ONLY FOR NADIR MODE)
-
-    """
-
 def power_on(logger):
+    ## TODO: Send commands to pumpkin MCU service to power on the MAI
     logger.info("Powering on MAI400")
     pass
 
 def wait_for_detumble(logger):
+    ## TODO: Test this
     detumbled = check_spin(logger=logger,
                            reboot=False,
                            threshold=DETUMBLE_RATE_THRESHOLD,
@@ -311,6 +290,8 @@ def wait_for_detumble(logger):
         raise
 
 def update_gps_info(logger):
+    ## TODO: Test this against live GPS data
+    ## TODO: Check that lock data is in the appropriate format
     counter = 0
     for i in range(GPS_RETRIES):
         power_gps(logger=logger)
@@ -387,7 +368,6 @@ def wait_for_angle(logger):
 def main():
 
     logger = app_api.logging_setup("adcs-hs")
-    # logger = logging_setup("adcs-hs")
 
     parser = argparse.ArgumentParser()
 
