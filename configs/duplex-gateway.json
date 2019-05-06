@@ -1,0 +1,11 @@
+{
+  "gateway-token": "fc9879269683eff341982ccef829c6704c7ebfb178d8ac3e8c9f13031d5d51b9",
+  "major-tom-endpoint": "wss://app.majortom.cloud/gateway_api/v1.0",
+  "system-name": "apollo-fusion",
+  "ssl-verify": true,
+  "ssl-ca-bundle": "/home/ryan/cacert.pem",
+  "sat-ip": "127.0.0.1",
+  "bind-ip": "127.0.0.1",
+  "comm-service-port": 15003,
+  "receive-port" : 15002
+}
