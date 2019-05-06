@@ -16,9 +16,6 @@ import time
 
 import websockets
 
-from kubos_gateway.command import Command
-from kubos_gateway.command_result import CommandResult
-
 logger = logging.getLogger(__name__)
 
 
@@ -75,12 +72,7 @@ class MajorTom:
         message_type = message["type"]
         logger.info("From Major Tom: {}".format(message))
         if message_type == "command":
-            command = Command(message["command"])
-            command_result: CommandResult = await self.satellite.handle_command(command)
-            if command_result.sent:
-                await self.transmit_command_payload(command.id, command_result.payload)
-            else:
-                await self.transmit_command_error(command.id, command_result.errors)
+            logger.error("This gateway cannot process commands.")
         elif message_type == "error":
             logger.error("Error from Major Tom: {}".format(message["error"]))
         elif message_type == "hello":
@@ -114,64 +106,4 @@ class MajorTom:
                     "timestamp": metric["timestamp"]
                 } for metric in metrics
             ]
-        })
-
-    async def transmit_log_messages(self, log_messages):
-        await self.transmit({
-            "type": "log_messages",
-            "log_messages": [
-                {
-                    "system": log_message["system"],
-
-                    # Can be "debug", "nominal", "warning", or "error".
-                    "level": log_message.get("level", "nominal"),
-
-                    "message": log_message["message"],
-
-                    # Timestamp is expected to be millisecond unix epoch
-                    "timestamp": log_message.get("timestamp", int(time.time() * 1000))
-                } for log_message in log_messages
-            ]
-        })
-
-    async def transmit_command_payload(self, command_id, payload):
-        await self.transmit({
-            "type": "command_status",
-            "command_status": {
-                "source": "gateway",
-                "id": command_id,
-                "payload": payload
-            }
-        })
-
-    async def transmit_command_ack(self, command_id, return_code, output, errors):
-        await self.transmit({
-            "type": "command_status",
-            "command_status": {
-                "source": "remote",
-                "id": command_id,
-                "errors": errors,
-                "code": return_code,
-                "output": output
-            }
-        })
-
-    async def transmit_command_error(self, command_id, errors):
-        await self.transmit({
-            "type": "command_status",
-            "command_status": {
-                "source": "gateway",
-                "id": command_id,
-                "errors": errors
-            }
-        })
-
-    async def transmit_script_error(self, script_id, errors):
-        await self.transmit({
-            "type": "script_status",
-            "script_status": {
-                "source": "gateway",
-                "id": script_id,
-                "errors": errors
-            }
         })

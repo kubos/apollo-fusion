@@ -1,7 +1,7 @@
 #!/usr/bin/python3.6
 #------------------------------------------------------------
 # NearSpace Launch (NSL) Web API access demo
-# Permission is granted to NSL's clients to use and modify this code 
+# Permission is granted to NSL's clients to use and modify this code
 # as needed for NSL-related purposes.
 # Aug 2017, modified Apr 2018 -sb
 #------------------------------------------------------------
@@ -77,4 +77,4 @@ class NSLWeb():
             return simplex_records["results"]
 
         except Exception as e:
-            LOGGER.debug('Error: {}'.format(e.args))
+            LOGGER.error('Error: {}'.format(e.args))
