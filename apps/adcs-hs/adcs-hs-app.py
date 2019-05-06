@@ -6,7 +6,7 @@ import sys
 import time
 import logging
 
-SERVICES = app_api.Services("/Users/jessecoffey/Workspace/apollo-fusion/common/overlay/home/system/etc/config.toml")
+SERVICES = app_api.Services()
 
 ## Housekeeping
 ## TODO: Test that these constants are the appropriate values
@@ -39,6 +39,10 @@ def on_boot(logger):
 
     # Make sure ADCS is on
     power_on(logger=logger)
+
+    ## TODO: Get past here
+    logger.warning("ADCS health and status checking is unfinished. Quitting.")
+    return
 
     # Launch ADCS Setup
     ## TODO: Test mutation to start it
