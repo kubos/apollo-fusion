@@ -49,41 +49,11 @@ pub fn get_telem() -> Result<(), Error> {
     let result = query(&service, DUPLEX_TELEMETRY, Some(Duration::from_secs(10)))?;
 
     let mut telem_vec: Vec<(String, String)> = vec![];
-    // let health = &result["modemHealth"].as_object();
 
-    // Auto-convert returned JSON into a flat key-value vector
-    // if let Some(data) = health {n
-    //     process_json(&mut telem_vec, data, "health_".to_owned());
-    // }
-
+    // Flatten all of the telemetry
     if let Some(data) = &result.as_object() {
         process_json(&mut telem_vec, data, "".to_owned());
     }
-    dbg!(&telem_vec);
-
-    // if let Some(data) = result["packetsUp"].as_str() {
-    //     telem_vec.push(("packets_up".to_owned(), data.to_owned()));
-    // }
-
-    // if let Some(data) = result["failedPacketsUp"].as_str() {
-    //     telem_vec.push(("failed_packets_up".to_owned(), data.to_owned()));
-    // }
-
-    // if let Some(data) = result["packetsDown"].as_str() {
-    //     telem_vec.push(("packets_down".to_owned(), data.to_owned()));
-    // }
-
-    // if let Some(data) = result["failedPacketsDown"].as_str() {
-    //     telem_vec.push(("failed_packets_down".to_owned(), data.to_owned()));
-    // }
-
-    // if let Some(data) = result["fileQueueCount"].as_str() {
-    //     telem_vec.push(("file_queue_count".to_owned(), data.to_owned()));
-    // }
-
-    // if let Some(data) = result["alive"].as_str() {
-    //     telem_vec.push(("alive".to_owned(), data.to_owned()));
-    // }
 
     // Send all the telemetry to the telemetry database
     send_telem("DUPLEX", telem_vec);
