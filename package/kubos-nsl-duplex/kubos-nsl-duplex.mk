@@ -11,7 +11,7 @@ KUBOS_NSL_DUPLEX_POST_INSTALL_TARGET_HOOKS += NSL_DUPLEX_INSTALL_TARGET_CMDS
 KUBOS_NSL_DUPLEX_POST_INSTALL_TARGET_HOOKS += NSL_DUPLEX_INSTALL_INIT_SYSV
 
 define NSL_DUPLEX_BUILD_CMDS
-	cd $(BUILD_DIR)/kubos-$(KUBOS_VERSION)/services/nsl-dupex-d2-comms-service && \
+	cd $(BUILD_DIR)/kubos-$(KUBOS_VERSION)/services/nsl-duplex-d2-comms-service && \
 	PATH=$(PATH):~/.cargo/bin:/usr/bin/iobc_toolchain/usr/bin && \
 	CC=$(TARGET_CC) cargo build --target $(CARGO_TARGET) --release
 endef
@@ -19,7 +19,7 @@ endef
 # Install the application into the rootfs file system
 define NSL_DUPLEX_INSTALL_TARGET_CMDS
 	mkdir -p $(TARGET_DIR)/usr/sbin
-	$(INSTALL) -D -m 0755 $(BUILD_DIR)/kubos-$(KUBOS_VERSION)/$(CARGO_OUTPUT_DIR)/nsl-dupex-d2-comms-service \
+	$(INSTALL) -D -m 0755 $(BUILD_DIR)/kubos-$(KUBOS_VERSION)/$(CARGO_OUTPUT_DIR)/nsl-duplex-d2-comms-service \
 		$(TARGET_DIR)/usr/sbin
 		
     echo 'CHECK PROCESS kubos-NSL_DUPLEX PIDFILE /var/run/NSL_DUPLEX-service.pid' > $(TARGET_DIR)/etc/monit.d/kubos-NSL_DUPLEX.cfg
