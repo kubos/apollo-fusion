@@ -14,8 +14,8 @@ WHEEL_SPEED_THRESHOLD = 5000 # RPM
 WHEEL_SPEED_THRESHOLD_TIMEOUT = 20 # Seconds
 ANGLE_TO_GO_THRESHOLD = 2 # degrees
 ANGLE_TO_GO_THRESHOLD_TIMEOUT = 3*60 # 3 Minutes
-RATE_THRESHOLD = 6 # deg/s
-RATE_THRESHOLD_TIMEOUT = 10 # Seconds
+BODY_RATE_THRESHOLD = 6 # deg/s
+BODY_RATE_THRESHOLD_TIMEOUT = 10 # Seconds
 ADCS_SETUP_TIMEOUT = 24*60*60 # 24 hours
 HS_LOOP_TIME = 1*60 # 1 minute
 NOOP_RETRY = 3
@@ -23,9 +23,9 @@ REBOOT_COUNT = 0
 
 ## Setup
 ## TODO: Test that these constants are the appropriate values 
-DETUMBLE_RATE_THRESHOLD = 0.5 # deg/s
-DETUMBLE_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops (12 hours)
-DETUMBLE_RATE_LOOP_TIME = 60 # Seconds
+DETUMBLE_BODY_RATE_THRESHOLD = 0.5 # deg/s
+DETUMBLE_BODY_RATE_THRESHOLD_TIMEOUT = 12*60 # Loops (12 hours)
+DETUMBLE_BODY_RATE_LOOP_TIME = 60 # Seconds
 POINTING_ANGLE_THRESHOLD = 1 # Degree
 POINTING_ANGLE_TIMEOUT = 5*60 # 5 Minutes
 GPS_LOCK_TIMEOUT = 12*60 # Loops (1 hour)
@@ -157,10 +157,10 @@ def check_angle(logger,reboot = True, threshold=ANGLE_TO_GO_THRESHOLD,timeout=AN
         angle = query_mai(logger=logger,tlm_key=angle_to_go_key)
     return True
 
-def check_spin(logger,reboot = True,threshold = RATE_THRESHOLD,timeout = RATE_THRESHOLD_TIMEOUT,loop_time = 1):
+def check_spin(logger,reboot = True,threshold = BODY_RATE_THRESHOLD,timeout = BODY_RATE_THRESHOLD_TIMEOUT,loop_time = 1):
     """
-    RMS of Body Rate > RATE_THRESHOLD deg/s
-    for RATE_THRESHOLD_TIMEOUT seconds
+    RMS of Body Rate > BODY_RATE_THRESHOLD deg/s
+    for BODY_RATE_THRESHOLD_TIMEOUT seconds
     """
     ## TODO: Check units on query results for telemetry db and mai service
     logger.debug("Checking Body Rate")
@@ -180,7 +180,7 @@ def check_spin(logger,reboot = True,threshold = RATE_THRESHOLD,timeout = RATE_TH
         counter+=1
         if counter >= timeout:
             if reboot == True:
-                reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(RATE_THRESHOLD,RATE_THRESHOLD_TIMEOUT,rms))
+                reboot_mai(logger=logger,reason="rms of spin over {} for {} seconds. Rate: {}".format(BODY_RATE_THRESHOLD,BODY_RATE_THRESHOLD_TIMEOUT,rms))
             return False
         rate = query_mai(logger=logger,tlm_key=mai_rate_key)
         rms_rate = rms(rate)
@@ -282,9 +282,9 @@ def wait_for_detumble(logger):
     ## TODO: Test this
     detumbled = check_spin(logger=logger,
                            reboot=False,
-                           threshold=DETUMBLE_RATE_THRESHOLD,
-                           timeout=DETUMBLE_RATE_THRESHOLD_TIMEOUT,
-                           loop_time=DETUMBLE_RATE_LOOP_TIME)
+                           threshold=DETUMBLE_BODY_RATE_THRESHOLD,
+                           timeout=DETUMBLE_BODY_RATE_THRESHOLD_TIMEOUT,
+                           loop_time=DETUMBLE_BODY_RATE_LOOP_TIME)
     if detumbled == False:
         reboot_mai(logger=logger,reason="Did not detumble. Rebooting into acquisition mode.")
         raise
