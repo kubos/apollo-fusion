@@ -37,7 +37,7 @@ jobs:
         - image: kubos/kubos-dev:latest
       steps:
         - checkout
-        - run: cd tools; ./build-apps.sh
+        - run: cd tools; ./bundle-apps.sh
         - store_artifacts:
             path: tools/apps-$(date +%Y.%m.%d).tar.gz
     
