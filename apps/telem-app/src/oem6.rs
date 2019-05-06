@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-// Gather telemetry from the NovAtel OEM6
+// Gather telemetry from the NovAtel OEM7
 
 use crate::telem_db::{process_json, send_telem};
 use failure::Error;
@@ -23,7 +23,7 @@ use std::time::Duration;
 
 // Note: Debug telemetry is omitted because it is only version/model info,
 // which does not change
-const OEM6_TELEMETRY: &str = r#"{
+const OEM_TELEMETRY: &str = r#"{
     errors,
     telemetry {
         nominal {
@@ -54,7 +54,7 @@ const OEM6_TELEMETRY: &str = r#"{
     }
 }"#;
 
-const OEM6_POWER: &str = r#"
+const OEM_POWER: &str = r#"
     mutation {
         passthrough(module: "aim2", command: "GPS:POW ON") {
             status,
@@ -63,7 +63,7 @@ const OEM6_POWER: &str = r#"
     }
 "#;
 
-const OEM6_COMM: &str = r#"
+const OEM_COMM: &str = r#"
     mutation {
         passthrough(module: "aim2", command: "GPS:COMM UART3") {
             status,
@@ -72,7 +72,7 @@ const OEM6_COMM: &str = r#"
     }
 "#;
 
-const OEM6_PASS: &str = r#"
+const OEM_PASS: &str = r#"
     mutation {
         passthrough(module: "aim2", command: "GPS:PASS ON") {
             status,
@@ -82,19 +82,19 @@ const OEM6_PASS: &str = r#"
 "#;
 
 pub fn get_telem() -> Result<(), Error> {
-    // Make sure the OEM6 is on and able to communicate with us
+    // Make sure the OEM is on and able to communicate with us
     let service = ServiceConfig::new("pumpkin-mcu-service");
 
-    let _ = query(&service, OEM6_POWER, Some(Duration::from_millis(500)))?;
+    let _ = query(&service, OEM_POWER, Some(Duration::from_millis(500)))?;
 
-    let _ = query(&service, OEM6_COMM, Some(Duration::from_millis(500)))?;
+    let _ = query(&service, OEM_COMM, Some(Duration::from_millis(500)))?;
 
-    let _ = query(&service, OEM6_PASS, Some(Duration::from_millis(500)))?;
+    let _ = query(&service, OEM_PASS, Some(Duration::from_millis(500)))?;
 
     let service = ServiceConfig::new("novatel-oem6-service");
 
     // Get all the basic telemetry
-    let result = query(&service, OEM6_TELEMETRY, Some(Duration::from_secs(1)))?;
+    let result = query(&service, OEM_TELEMETRY, Some(Duration::from_secs(2)))?;
 
     let mut telem_vec: Vec<(String, String)> = vec![];
     let nominal = &result["telemetry"]["nominal"].as_object();
@@ -105,7 +105,7 @@ pub fn get_telem() -> Result<(), Error> {
     }
 
     // Send it to the telemetry database
-    send_telem("OEM6", telem_vec);
+    send_telem("OEM", telem_vec);
 
     Ok(())
 }

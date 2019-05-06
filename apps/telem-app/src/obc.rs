@@ -29,7 +29,7 @@ const OBC_TELEMETRY: &str = r#"{
 }"#;
 
 pub fn get_telem() -> Result<(), Error> {
-    let service = ServiceConfig::new("clyde-3g-eps-service");
+    let service = ServiceConfig::new("monitor-service");
 
     let result = query(&service, OBC_TELEMETRY, Some(Duration::from_secs(1)))?;
 

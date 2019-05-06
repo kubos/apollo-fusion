@@ -25,7 +25,7 @@ pub fn get_telem() -> Result<(), Error> {
     let service = ServiceConfig::new("pumpkin-mcu-service");
 
     // Get all the telemetry for all the Sup MCU modules we have
-    let modules = ["aim2", "bim", "pim", "rhm", "epsm"];
+    let modules = ["aim2", "bim", "pim", "sim", "rhm", "bm2"];
 
     for module in modules.iter() {
         let result = query(
@@ -33,7 +33,7 @@ pub fn get_telem() -> Result<(), Error> {
             &format!("{{mcuTelemetry(module: \"{}\")}}", module),
             // The delay is 200ms per field requested.
             // Each module will have ~20 fields
-            Some(Duration::from_secs(10)),
+            Some(Duration::from_secs(20)),
         )?;
 
         let telem_raw = result["mcuTelemetry"].as_str().unwrap_or("");
@@ -42,9 +42,11 @@ pub fn get_telem() -> Result<(), Error> {
         let mut telem_vec: Vec<(String, String)> = vec![];
         if let Some(inner) = telem.as_object() {
             for (key, value) in inner.iter() {
-                let data = &value["data"];
+                if value["timestamp"] != 0 {
+                    let data = &value["data"];
 
-                telem_vec.push((key.to_owned(), format!("{}", data)));
+                    telem_vec.push((key.to_owned(), format!("{}", data)));
+                }
             }
         }
 
