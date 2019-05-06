@@ -2,6 +2,7 @@
 members = [
 "beacon-app",
 "deploy-app",
+"obc-hs",
 "telem-app"
 ]
 
