@@ -1,0 +1,1 @@
+source "$BR2_EXTERNAL_APOLLO_FUSION_PATH/package/kubos-nsl-duplex/Config.in"
