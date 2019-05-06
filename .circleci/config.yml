@@ -38,8 +38,9 @@ jobs:
       steps:
         - checkout
         - run: cd tools; ./bundle-apps.sh
+        - run: echo "export TIMESTAMP=$(date +%Y.%m.%d)" >> $BASH_ENV
         - store_artifacts:
-            path: tools/apps-$(date +%Y.%m.%d).tar.gz
+            path: tools/apps-${BASH_ENV}.tar.gz
     
 workflows:
   version: 2
